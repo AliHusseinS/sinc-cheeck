@@ -1,0 +1,2398 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>منظومة تدقيق رصانة البحوث العلمية | كلية التخطيط العمراني - جامعة الكوفة</title>
+  
+  <!-- خط Cairo الأنيق -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- مكتبات التصميم والأيقونات -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- ملاحظة: تم الاستغناء عن html2canvas/html2pdf والاعتماد على محرك الطباعة الأصلي للمتصفح لضمان صحة النص العربي -->
+  <!-- مكتبة التنبيهات الرشيقة SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <!-- مكتبة توليد الباركود / QR كود للبحوث والروابط -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+  <!-- قاعدة بيانات المجلات العراقية الرسمية المعتمدة في وزارة التعليم العالي (IASJ) -->
+  <script src="iasj_data.js"></script>
+  <!-- قاعدة بيانات فحص المجلات ودور النشر المفترسة والتجارية (RDD & Beall's & PJ List) -->
+  <script src="predatory_data.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            cairo: ['Cairo', 'sans-serif'],
+          },
+          colors: {
+            primary: {
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              500: '#0284c7',
+              600: '#0369a1',
+              700: '#075985',
+              800: '#0c4a6e',
+              900: '#082f49',
+            },
+            accent: {
+              500: '#d97706',
+              600: '#b45309',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Cairo', sans-serif;
+      background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%);
+      min-height: 100vh;
+    }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.07), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+    .custom-scroll::-webkit-scrollbar {
+      height: 8px;
+      width: 6px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 4px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #94a3b8;
+      border-radius: 4px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb:hover {
+      background: #64748b;
+    }
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #pdf-export-content, #pdf-export-content * {
+        visibility: visible;
+      }
+      #pdf-export-content {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body class="text-slate-800 antialiased selection:bg-primary-500 selection:text-white">
+
+  <!-- ================= الشريط العلوي (Navbar) ================= -->
+  <header class="bg-gradient-to-r from-primary-900 via-primary-800 to-slate-900 text-white shadow-xl sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-20">
+        
+        <!-- الهوية والشعار -->
+        <div class="flex items-center space-x-4 space-x-reverse">
+          <div class="w-12 h-12 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center shadow-inner">
+            <i class="fa-solid fa-graduation-cap text-2xl text-amber-400"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h1 class="text-lg md:text-xl font-bold tracking-tight">منظومة تدقيق رصانة البحوث العلمية</h1>
+            </div>
+            <p class="text-xs md:text-sm text-slate-300">جامعة الكوفة - كلية التخطيط العمراني | لجنة التقييم</p>
+          </div>
+        </div>
+
+        <!-- أزرار الإجراءات في الشريط العلوي -->
+        <div class="flex items-center gap-2 sm:gap-3">
+          
+          <!-- زر سجل المحاضر -->
+          <button id="btn-open-archive" onclick="openArchiveModal()" class="relative inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 text-sm font-semibold transition-all duration-200 hover:shadow-md active:scale-95">
+            <i class="fa-solid fa-lock text-amber-400"></i>
+            <span class="hidden sm:inline">سجل المحاضر</span>
+            <span class="sm:hidden">السجل</span>
+          </button>
+
+          <!-- زر فحص البحوث -->
+          <button id="btn-check-research" onclick="openResearchCheckerModal()" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-emerald-600/90 hover:bg-emerald-600 text-white text-sm font-semibold shadow transition-all duration-200 hover:shadow-md active:scale-95">
+            <i class="fa-solid fa-microscope text-emerald-200"></i>
+            <span class="hidden sm:inline">فحص البحوث</span>
+            <span class="sm:hidden">فحص البحوث</span>
+            <span class="flex h-2 w-2 relative">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-300 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-200"></span>
+            </span>
+          </button>
+
+          <!-- زر ضبط رابط Google Apps Script مقفل برمز 565656 -->
+          <button onclick="promptSettingsPassword()" title="إعدادات الربط السحابي" class="p-2 rounded-lg bg-white/5 hover:bg-white/15 text-slate-300 hover:text-white transition">
+            <i class="fa-solid fa-gear"></i>
+          </button>
+
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= المحتوى الرئيسي ================= -->
+  <main id="main-container" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 transition-all duration-300">
+
+    <!-- الخطوة 1: اختيار القسم قبل الدخول إلى الواجهة -->
+    <section id="step-select-department" class="transition-all duration-500">
+      <div class="max-w-2xl mx-auto text-center mt-6 mb-10">
+        <div class="inline-flex items-center justify-center p-3 bg-primary-100 text-primary-700 rounded-2xl mb-4 shadow-sm">
+          <i class="fa-solid fa-building-columns text-3xl"></i>
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mb-2">استمارة تدقيق الرصانة</h2>
+        <p class="text-slate-600 text-sm sm:text-base">يرجى  اختيار القسم العلمي المعني قبل الانتقال إلى الاستمارة</p>
+      </div>
+
+      <div class="max-w-3xl mx-auto glass-card rounded-3xl p-6 sm:p-10 border border-slate-200/80">
+        <label class="block text-slate-700 font-bold mb-4 text-center text-lg">اختر أحد الأقسام العلمية التالية:</label>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          
+          <!-- قسم التخطيط الحضري -->
+          <label class="relative flex flex-col p-5 rounded-2xl border-2 border-slate-200 hover:border-primary-500 bg-white cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md group">
+            <input type="radio" name="dept_selection" value="قسم التخطيط الحضري" class="peer sr-only" checked>
+            <div class="w-12 h-12 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center mb-3 group-hover:scale-110 transition peer-checked:bg-primary-600 peer-checked:text-white">
+              <i class="fa-solid fa-city text-xl"></i>
+            </div>
+            <span class="font-bold text-slate-800 text-base mb-1 peer-checked:text-primary-700">قسم التخطيط الحضري</span>
+            <span class="text-xs text-slate-500">Urban Planning</span>
+            <div class="absolute top-4 left-4 hidden peer-checked:block text-primary-600">
+              <i class="fa-solid fa-circle-check text-xl"></i>
+            </div>
+          </label>
+
+          <!-- قسم التخطيط البيئي -->
+          <label class="relative flex flex-col p-5 rounded-2xl border-2 border-slate-200 hover:border-emerald-500 bg-white cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md group">
+            <input type="radio" name="dept_selection" value="قسم التخطيط البيئي" class="peer sr-only">
+            <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3 group-hover:scale-110 transition peer-checked:bg-emerald-600 peer-checked:text-white">
+              <i class="fa-solid fa-leaf text-xl"></i>
+            </div>
+            <span class="font-bold text-slate-800 text-base mb-1 peer-checked:text-emerald-700">قسم التخطيط البيئي</span>
+            <span class="text-xs text-slate-500">Environmental Planning</span>
+            <div class="absolute top-4 left-4 hidden peer-checked:block text-emerald-600">
+              <i class="fa-solid fa-circle-check text-xl"></i>
+            </div>
+          </label>
+
+          <!-- قسم التخطيط الإقليمي -->
+          <label class="relative flex flex-col p-5 rounded-2xl border-2 border-slate-200 hover:border-amber-500 bg-white cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md group">
+            <input type="radio" name="dept_selection" value="قسم التخطيط الاقليمي" class="peer sr-only">
+            <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mb-3 group-hover:scale-110 transition peer-checked:bg-amber-600 peer-checked:text-white">
+              <i class="fa-solid fa-city text-xl"></i>
+            </div>
+            <span class="font-bold text-slate-800 text-base mb-1 peer-checked:text-amber-700">قسم التخطيط الإقليمي</span>
+            <span class="text-xs text-slate-500">Regional Planning</span>
+            <div class="absolute top-4 left-4 hidden peer-checked:block text-amber-600">
+              <i class="fa-solid fa-circle-check text-xl"></i>
+            </div>
+          </label>
+
+        </div>
+
+        <div class="text-center">
+          <button id="btn-next-step" onclick="proceedToForm()" class="w-full sm:w-auto min-w-[220px] inline-flex items-center justify-center gap-3 px-8 py-3.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-bold text-base shadow-lg shadow-primary-600/30 hover:shadow-xl hover:shadow-primary-600/40 transition-all duration-200 active:scale-95">
+            <span>التالي: الانتقال إلى الاستمارة</span>
+            <i class="fa-solid fa-arrow-left"></i>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- الخطوة 2: استمارة الإدخال والجدول الديناميكي -->
+    <section id="step-main-form" class="hidden transition-all duration-500">
+      
+      <!-- شريط معلومات القسم المحدد مع زر الرجوع -->
+      <div class="flex flex-wrap items-center justify-between gap-4 bg-white border border-slate-200 rounded-2xl p-4 mb-6 shadow-sm">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-primary-50 text-primary-600 flex items-center justify-center font-bold">
+            <i class="fa-solid fa-layer-group text-lg"></i>
+          </div>
+          <div>
+            <span class="text-xs text-slate-500 block">القسم :</span>
+            <h3 id="display-selected-dept" class="text-base sm:text-lg font-bold text-primary-700">قسم التخطيط الحضري</h3>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <button onclick="backToDeptSelection()" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-300 hover:bg-slate-50 text-xs font-semibold text-slate-600 transition">
+            <i class="fa-solid fa-arrow-rotate-right"></i>
+            <span>تغيير القسم</span>
+          </button>
+          <div class="bg-slate-100 text-slate-700 text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-200">
+            العام : 2024-2025
+          </div>
+        </div>
+      </div>
+
+      <!-- بطاقة استمارة إدخال تفاصيل البحث -->
+      <div class="glass-card rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-lg mb-8">
+        <div class="flex items-center justify-between border-b border-slate-200 pb-4 mb-6">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+              <i class="fa-solid fa-plus text-base"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-800">إدخال بيانات البحث العلمي</h3>
+          </div>
+        </div>
+
+        <form id="research-form" onsubmit="event.preventDefault(); addResearchItem();">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+            
+            <!-- المدخل 1: ت (التسلسل) - تلقائي -->
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1.5">
+                ت (التسلسل التلقائي)
+              </label>
+              <div class="relative">
+                <input type="text" id="input-seq" readonly value="1" class="w-full bg-slate-100 border border-slate-300 rounded-xl px-3.5 py-2.5 text-center font-bold text-slate-700 focus:outline-none cursor-not-allowed">
+              </div>
+            </div>
+
+            <!-- المدخل 6 (اسم التدريسي) -->
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1.5">
+                اسم التدريسي <span class="text-rose-500">*</span>
+              </label>
+              <input type="text" id="input-author" required placeholder="مثال: أ.م.د. علي حسين" class="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
+            </div>
+
+            <!-- المدخل 7 (تسلسل الباحث) - List -->
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1.5">
+                تسلسل الباحث <span class="text-rose-500">*</span>
+              </label>
+              <select id="input-author-order" required class="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
+                <option value="الأول" selected>الأول</option>
+                <option value="الثاني">الثاني</option>
+                <option value="الثالث">الثالث</option>
+                <option value="الرابع">الرابع</option>
+                <option value="الخامس">الخامس</option>
+                <option value="السادس">السادس</option>
+                <option value="أخرى">أخرى</option>
+              </select>
+            </div>
+
+            <!-- المدخل 5 (صنف البحث) - List (مشترك , منفرد) -->
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1.5">
+                صنف البحث <span class="text-rose-500">*</span>
+              </label>
+              <select id="input-research-type" required class="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
+                <option value="مشترك" selected>مشترك</option>
+                <option value="منفرد">منفرد</option>
+              </select>
+            </div>
+
+            <!-- المدخل 2: عنوان البحث -->
+            <div class="md:col-span-2">
+              <label class="block text-xs font-bold text-slate-600 mb-1.5">
+                عنوان البحث <span class="text-rose-500">*</span>
+              </label>
+              <input type="text" id="input-title" required placeholder="أدخل العنوان الكامل للبحث العلمي..." class="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
+            </div>
+
+            <!-- المدخل 3: اسم المجلة -->
+            <div class="md:col-span-2">
+              <label class="block text-xs font-bold text-slate-600 mb-1.5">
+                اسم المجلة / جهة النشر <span class="text-rose-500">*</span>
+              </label>
+              <input type="text" id="input-journal" list="iasj-journals-datalist" required placeholder="اسم المجلة العلمية أو المؤتمر (يدعم الإكمال التلقائي لمجلات IASJ)..." class="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
+              <datalist id="iasj-journals-datalist"></datalist>
+            </div>
+
+            <!-- المدخل 4: صنف المجلة - List (1- مجلة محلية 2- مجلة عالمية 3- مؤتمر عالمي 4- مؤتمر محلي) -->
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1.5">
+                صنف المجلة <span class="text-rose-500">*</span>
+              </label>
+              <select id="input-journal-category" required class="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
+                <option value="مجلة عالمية" selected>مجلة عالمية</option>
+                <option value="مجلة محلية">مجلة محلية</option>
+                <option value="مؤتمر عالمي">مؤتمر عالمي</option>
+                <option value="مؤتمر محلي">مؤتمر محلي</option>
+              </select>
+            </div>
+
+            <!-- المدخل 4 (المكرر): CiteScore -->
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1.5">
+                CiteScore / معامل التأثير
+              </label>
+              <input type="text" id="input-citescore" placeholder="مثال: 3.8 أو لا يوجد" class="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
+            </div>
+
+            <!-- المدخل 8: تاريخ النشر (سنة وشهر فقط) -->
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1.5">
+                تاريخ النشر (السنة والشهر) <span class="text-rose-500">*</span>
+              </label>
+              <input type="month" id="input-publish-date" required class="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
+            </div>
+
+            <!-- المدخل 9: رابط البحث ! -->
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1.5">
+                رابط البحث (DOI / URL) <span class="text-rose-500">*</span>
+              </label>
+              <input type="url" id="input-link" required placeholder="https://doi.org/..." class="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
+            </div>
+
+          </div>
+
+          <!-- أزرار الإضافة والتفريغ -->
+          <div class="mt-6 flex flex-wrap items-center justify-end gap-3 pt-4 border-t border-slate-100">
+            <button type="button" onclick="resetFormInputs()" class="px-4 py-2 rounded-xl text-slate-500 hover:text-slate-700 hover:bg-slate-100 text-xs font-semibold transition">
+              <i class="fa-solid fa-eraser ml-1"></i> مسح الحقول
+            </button>
+            <button type="submit" id="btn-add-item" class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm shadow transition duration-150 active:scale-95">
+              <i class="fa-solid fa-plus text-amber-400"></i>
+              <span>إضافة البحث إلى الجدول</span>
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- ================= جدول العرض التفاعلي بالعرض ================= -->
+      <div class="glass-card rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-lg">
+        
+        <!-- العبارة الإلزامية الرسمية فوق الجدول -->
+        <div class="bg-gradient-to-r from-sky-50 via-blue-50 to-indigo-50 border-r-4 border-primary-600 p-4 rounded-xl mb-6 shadow-sm">
+          <p id="table-official-header-text" class="text-sm sm:text-base font-bold text-primary-900 leading-relaxed">
+            البحوث المقدمة من تدريسي <span id="header-dept-name" class="underline decoration-primary-500 decoration-2">قسم التخطيط الحضري</span> والتي خضعت لتدقيق لجنة الرصانة لأغراض عملية تقييم الأداء للعام الدراسي 2024-2025
+          </p>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div class="flex items-center gap-2">
+            <h4 class="font-bold text-slate-800">قائمة البحوث المضافة</h4>
+            <span id="badge-count" class="bg-primary-100 text-primary-800 text-xs font-bold px-2.5 py-0.5 rounded-full">0 بحث</span>
+          </div>
+
+          <div class="text-xs text-slate-500">
+            يمكنك إضافة أكثر من  بحث، وسيتم التحديث التلقائي .
+          </div>
+        </div>
+
+        <!-- جدول العرض المتجاوب الكامل -->
+        <div class="overflow-x-auto custom-scroll rounded-xl border border-slate-200">
+          <table class="w-full text-right text-xs sm:text-sm border-collapse bg-white">
+            <thead class="bg-slate-900 text-white font-semibold">
+              <tr>
+                <th class="py-3 px-3 text-center w-12 border-b border-slate-800">ت</th>
+                <th class="py-3 px-3 border-b border-slate-800 min-w-[220px]">عنوان البحث</th>
+                <th class="py-3 px-3 border-b border-slate-800 min-w-[150px]">اسم المجلة</th>
+                <th class="py-3 px-3 border-b border-slate-800 min-w-[110px]">صنف المجلة</th>
+                <th class="py-3 px-3 border-b border-slate-800 text-center min-w-[80px]">CiteScore</th>
+                <th class="py-3 px-3 border-b border-slate-800 text-center min-w-[85px]">صنف البحث</th>
+                <th class="py-3 px-3 border-b border-slate-800 min-w-[130px]">اسم التدريسي</th>
+                <th class="py-3 px-3 border-b border-slate-800 text-center min-w-[90px]">تسلسل الباحث</th>
+                <th class="py-3 px-3 border-b border-slate-800 text-center min-w-[100px]">تاريخ النشر</th>
+                <th class="py-3 px-3 border-b border-slate-800 text-center min-w-[90px]">الرابط</th>
+                <th class="py-3 px-3 border-b border-slate-800 text-center w-16">إجراء</th>
+              </tr>
+            </thead>
+            <tbody id="research-table-body" class="divide-y divide-slate-200">
+              <!-- سيتم توليد الصفوف عبر JavaScript -->
+              <tr id="empty-row" class="text-center text-slate-400 py-8">
+                <td colspan="11" class="py-10">
+                  <div class="flex flex-col items-center justify-center">
+                    <i class="fa-regular fa-folder-open text-3xl mb-2 text-slate-300"></i>
+                    <p class="text-slate-500 font-medium">لم يتم إضافة أي بحث حتى الآن</p>
+                    <p class="text-xs text-slate-400">استخدم الاستمارة أعلاه لإدراج بيانات بحوث التدريسيين</p>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- ================= قسم إدخال وتوزيع أعضاء اللجنة (الموقعين على المحضر) ================= -->
+        <div class="mt-8 pt-6 border-t border-slate-200 bg-slate-50/70 p-5 rounded-2xl border border-slate-200">
+          <div class="flex items-center justify-between flex-wrap gap-2 mb-4">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-lg bg-primary-100 text-primary-700 flex items-center justify-center">
+                <i class="fa-solid fa-file-signature text-sm"></i>
+              </div>
+              <h4 class="font-bold text-slate-800 text-sm sm:text-base">أعضاء لجنة الرصانة</h4>
+            </div>
+          </div>
+
+          <!-- مدخلات إضافة العضو -->
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end mb-5">
+            <div class="sm:col-span-6">
+              <label class="block text-xs font-bold text-slate-600 mb-1">اسم العضو</label>
+              <input type="text" id="member-name-input" placeholder="أدخل اسم التدريسي / عضو اللجنة..." class="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2 text-slate-800 text-xs sm:text-sm focus:ring-2 focus:ring-primary-500 outline-none">
+            </div>
+            <div class="sm:col-span-3">
+              <label class="block text-xs font-bold text-slate-600 mb-1">الصفة في اللجنة</label>
+              <select id="member-role-input" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-slate-800 text-xs sm:text-sm focus:ring-2 focus:ring-primary-500 outline-none">
+                <option value="عضواً" selected>عضواً</option>
+                <option value="رئيساً">رئيساً</option>
+              </select>
+            </div>
+            <div class="sm:col-span-3">
+              <button type="button" onclick="addCommitteeMember()" class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs sm:text-sm transition duration-150 active:scale-95 shadow-sm">
+                <i class="fa-solid fa-user-plus text-amber-400"></i>
+                <span>إضافة العضو</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- قائمة الأعضاء الموزعين بالتساوي أسفل الجدول -->
+          <div id="members-display-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 pt-3 border-t border-slate-200">
+            <!-- يتم توليد الأعضاء عبر JavaScript -->
+          </div>
+        </div>
+
+        <!-- أزرار التصدير والإرسال الأساسية -->
+        <div class="mt-8 pt-6 border-t border-slate-200 flex flex-wrap items-center justify-between gap-4">
+          <div class="flex items-center gap-2 text-xs text-slate-500">
+            <i class="fa-solid fa-building-columns text-primary-600 text-sm"></i>
+            <span>الشؤون العلمية / كلية التخطيط العمراني</span>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-3">
+            <button id="btn-export-pdf" onclick="handleExportAndSend()" class="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl bg-gradient-to-r from-primary-700 to-primary-900 hover:from-primary-800 hover:to-slate-900 text-white font-bold text-sm sm:text-base shadow-lg shadow-primary-700/30 hover:shadow-xl transition-all duration-200 active:scale-95">
+              <i class="fa-solid fa-file-pdf text-rose-400 text-lg"></i>
+              <span>تصدير المحضر وإرسال البيانات للتدقيق</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- الواجهة 3: واجهة فحص البحوث والرصانة العلمية (واجهة كاملة مخصصة وليست قائمة منبثقة) -->
+    <section id="view-research-checker" class="hidden transition-all duration-300">
+      
+      <!-- ترويسة الواجهة مع زر الرجوع وأزرار الإجراءات -->
+      <div class="flex flex-wrap items-center justify-between gap-4 bg-white border border-slate-200 rounded-2xl sm:rounded-3xl p-5 sm:p-6 mb-6 shadow-sm">
+        <div class="flex items-center gap-3.5">
+          <div class="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center text-2xl shadow-md shadow-emerald-600/20">
+            <i class="fa-solid fa-microscope"></i>
+          </div>
+          <div>
+            <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">فحص البحوث</h2>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2.5 sm:gap-3">
+          <button id="btn-sync-catalogs" onclick="manualSyncCatalogs()" title="تحديث قوائم المجلات المفترسة من السحابة (Google Apps Script)" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs sm:text-sm font-bold shadow-sm transition active:scale-95">
+            <i class="fa-solid fa-rotate"></i>
+            <span>تحديث القوائم السحابية</span>
+          </button>
+          <button id="btn-print-inspection-report" onclick="printInspectionReport()" class="hidden inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs sm:text-sm font-bold shadow-sm transition active:scale-95">
+            <i class="fa-solid fa-print"></i>
+            <span>طباعة تقرير الفحص</span>
+          </button>
+          <button onclick="closeResearchCheckerModal()" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-bold shadow-md transition active:scale-95">
+            <i class="fa-solid fa-arrow-right"></i>
+            <span>الرجوع إلى الاستمارة</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- بطاقة شريط البحث عن المحضر بالـ ID -->
+      <div class="glass-card rounded-2xl sm:rounded-3xl p-5 sm:p-7 border border-slate-200/90 shadow-md mb-6">
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <div class="relative flex-1">
+            <i class="fa-solid fa-file-invoice absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 text-base"></i>
+            <input type="text" id="checker-report-id-input" 
+                   onkeydown="if(event.key==='Enter') executeReportInspection()"
+                   placeholder="أدخل رقم المحضر هنا (مثال: UOK-URB-20261006-1941)..." 
+                   class="w-full bg-slate-50 hover:bg-white focus:bg-white border border-slate-300 rounded-xl sm:rounded-2xl pr-11 pl-4 py-3 sm:py-3.5 text-xs sm:text-sm font-mono text-slate-800 focus:ring-2 focus:ring-emerald-500 outline-none shadow-inner transition">
+          </div>
+          <button onclick="executeReportInspection()" 
+                  class="inline-flex items-center justify-center gap-2 px-7 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-emerald-600/30 transition active:scale-95">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <span>فحص المحضر</span>
+          </button>
+          <button onclick="inspectCurrentActiveTable()" 
+                  class="inline-flex items-center justify-center gap-2 px-5 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 font-semibold text-xs sm:text-sm transition shadow-sm">
+            <i class="fa-solid fa-table-list text-primary-600"></i>
+            <span>فحص الجدول الحالي</span>
+          </button>
+        </div>
+
+        <!-- قائمة المحاضر الأخيرة المصدرة السريعة -->
+        <div id="checker-recent-reports-chips" class="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t border-slate-200 text-xs text-slate-600">
+          <span class="font-bold text-slate-500 flex items-center gap-1.5"><i class="fa-solid fa-clock-rotate-left text-slate-400"></i> قائمة المحاضر:</span>
+        </div>
+      </div>
+
+      <!-- محتوى نتائج الفحص -->
+      <div id="checker-results-body" class="space-y-6">
+        <!-- الحالة الافتراضية قبل البحث -->
+        <div id="checker-placeholder-state" class="bg-white border border-slate-200 rounded-2xl sm:rounded-3xl p-8 sm:p-12 text-center shadow-sm">
+          <div class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-4 text-2xl">
+            <i class="fa-solid fa-magnifying-glass-chart text-emerald-600"></i>
+          </div>
+          <h4 class="text-base sm:text-lg font-bold text-slate-800">بانتظار إدخال رقم المحضر للفحص</h4>
+        </div>
+
+        <!-- حاوية النتائج التفاعلية للتقرير المفحوص -->
+        <div id="checker-content-report" class="hidden space-y-6">
+          <!-- بطاقة معلومات المحضر والملخص -->
+          <div id="checker-report-summary-card" class="bg-white border border-slate-200 rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-sm">
+            <!-- ديناميكي عبر JS -->
+          </div>
+
+          <!-- جدول فحص المجلات والبحوث -->
+          <div class="bg-white border border-slate-200 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm overflow-hidden">
+            <div class="flex items-center justify-between gap-3 mb-4 flex-wrap">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center text-sm font-bold">
+                  <i class="fa-solid fa-list-check"></i>
+                </div>
+                <h4 class="font-bold text-slate-800 text-sm sm:text-base">نتائج فحص وتدقيق المجلات والبحوث المرفقة</h4>
+              </div>
+              <div class="text-xs text-slate-500">
+                <span>تاريخ الفحص: </span>
+                <span id="checker-inspect-time" class="font-mono font-semibold text-slate-700"></span>
+              </div>
+            </div>
+
+            <div class="overflow-x-auto custom-scroll rounded-xl border border-slate-200">
+              <table class="w-full text-right text-xs border-collapse bg-white">
+                <thead class="bg-slate-900 text-white font-semibold">
+                  <tr>
+                    <th class="py-3.5 px-3 text-center w-10 border-b border-slate-800">ت</th>
+                    <th class="py-3.5 px-3 border-b border-slate-800 min-w-[220px]">عنوان البحث والباحث</th>
+                    <th class="py-3.5 px-3 border-b border-slate-800 min-w-[160px]">اسم المجلة وتصنيفها</th>
+                    <th class="py-3.5 px-3 border-b border-slate-800 text-center min-w-[150px]">بوابة المجلات العراقية (IASJ)</th>
+                    <th class="py-3.5 px-3 border-b border-slate-800 text-center min-w-[180px]">فحص المجلات ودور النشر المفترسة</th>
+                    <th class="py-3.5 px-3 border-b border-slate-800 text-center min-w-[150px]">رابط المجلة</th>
+                    <th class="py-3.5 px-3 border-b border-slate-800 text-center min-w-[130px]">محركات البحث (Scholar)</th>
+                    <th class="py-3.5 px-3 border-b border-slate-800 text-center min-w-[110px]">الملاحظات</th>
+                  </tr>
+                </thead>
+                <tbody id="checker-table-body" class="divide-y divide-slate-200">
+                  <!-- ديناميكي عبر JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- تذييل الواجهة -->
+      <div class="mt-6 p-4 bg-white border border-slate-200 rounded-2xl flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-shield-halved text-emerald-600"></i>
+          <span>كلية التخطيط العمراني - جامعة الكوفة</span>
+        </div>
+        <div>
+          <button onclick="closeResearchCheckerModal()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition">
+            <i class="fa-solid fa-arrow-right text-[10px]"></i>
+            <span>الرجوع إلى الاستمارة</span>
+          </button>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ================= نافذة النتيجة المنبثقة (Success Modal) ================= -->
+  <div id="modal-success" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden transition-opacity">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 mx-4 shadow-2xl border border-slate-100 transform transition-all text-center">
+      <div class="w-16 h-16 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-4 text-3xl shadow-inner">
+        <i class="fa-solid fa-check"></i>
+      </div>
+      
+      <h3 class="text-xl font-bold text-slate-900 mb-2">اكتمل التصدير والإرسال بنجاح</h3>
+      
+      <!-- النص المطلوب حرفياً في نص المستخدم -->
+      <div class="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-900 text-sm font-semibold mb-5 leading-relaxed">
+        تم إرسال البيانات إلى مكتب المعاون العلمي للتدقيق مع نسخة من البيانات إلى رئاسة <span id="modal-dept-label" class="underline font-bold"></span>
+      </div>
+
+      <!-- معرف المحضر (ID) -->
+      <div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 mb-5 text-right">
+        <span class="text-xs text-slate-500 block mb-1">معرّف المحضر الفريد (Report ID) لتتبع المعاملة:</span>
+        <div class="flex items-center justify-between">
+          <code id="modal-report-id" class="text-primary-700 font-mono font-bold text-sm sm:text-base">UOK-URB-2024-XXXX</code>
+          <button onclick="copyReportId()" class="text-xs text-slate-500 hover:text-primary-600 px-2.5 py-1 rounded bg-white border border-slate-200 hover:border-primary-300 transition">
+            <i class="fa-regular fa-copy ml-1"></i> نسخ
+          </button>
+        </div>
+      </div>
+
+      <!-- الإيميلات التي تم الإرسال لها -->
+      <div class="text-xs text-slate-500 text-right mb-6 space-y-1 bg-slate-50 p-3 rounded-xl border border-slate-100">
+        <p><strong>المرسل إليهم:</strong> <span id="modal-email-recipients" class="text-slate-700"></span></p>
+        <p><strong>نسخة المتابعة (CC):</strong> <span class="text-slate-700">yasirs.radhi@uokufa.edu.iq</span></p>
+      </div>
+
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+        <button id="btn-download-pdf-direct" onclick="downloadCurrentPDF()" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs sm:text-sm font-bold transition">
+          <i class="fa-solid fa-download"></i>
+          <span>تحميل ملف PDF الآن</span>
+        </button>
+        <button onclick="closeSuccessModal()" class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-bold transition">
+          إغلاق
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= نافذة سجل المحاضر المحمية بكلمة مرور ================= -->
+  <div id="modal-archive" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden transition-opacity">
+    <div class="bg-white rounded-3xl max-w-4xl w-full p-6 sm:p-8 mx-4 shadow-2xl border border-slate-100 max-h-[90vh] flex flex-col">
+      
+      <!-- ترويسة المودال -->
+      <div class="flex items-center justify-between border-b border-slate-200 pb-4 mb-5">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+            <i class="fa-solid fa-folder-tree text-lg"></i>
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-slate-900">سجل محاضر التدقيق</h3>
+          </div>
+        </div>
+        <button onclick="closeArchiveModal()" class="text-slate-400 hover:text-slate-600 p-2">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- قسم تسجيل الدخول برمز المرور (المطلوب 1122334455) -->
+      <div id="archive-auth-section" class="py-8 text-center max-w-md mx-auto">
+        <div class="w-14 h-14 rounded-2xl bg-slate-100 text-slate-700 flex items-center justify-center mx-auto mb-4 text-2xl">
+          <i class="fa-solid fa-key text-amber-500"></i>
+        </div>
+        <h4 class="font-bold text-slate-800 text-base mb-6">ادخل كلمة المرور  لعرض البيانات</h4>
+        
+        <form onsubmit="event.preventDefault(); verifyArchivePassword();" class="space-y-4">
+          <div>
+            <input type="password" id="archive-password-input" placeholder="أدخل رمز المرور السري..." class="w-full text-center tracking-widest text-lg font-bold bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none">
+          </div>
+          <button type="submit" id="btn-submit-pass" class="w-full py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm shadow transition">
+            فتح سجل المحاضر
+          </button>
+        </form>
+      </div>
+
+      <!-- قسم عرض المحاضر بعد إدخال كلمة المرور الصحيحة -->
+      <div id="archive-content-section" class="hidden flex-1 overflow-hidden flex flex-col">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div class="relative flex-1 max-w-sm">
+            <i class="fa-solid fa-magnifying-glass absolute right-3.5 top-3 text-slate-400 text-xs"></i>
+            <input type="text" id="archive-search-input" onkeyup="filterArchiveRecords()" placeholder="بحث برقم المحضر ID أو اسم القسم أو الباحث..." class="w-full bg-slate-50 border border-slate-200 rounded-xl pr-9 pl-3 py-2 text-xs focus:ring-1 focus:ring-primary-500 outline-none">
+          </div>
+          <button onclick="fetchArchiveData()" class="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-xs font-semibold text-slate-600">
+            <i class="fa-solid fa-arrows-rotate ml-1"></i> تحديث
+          </button>
+        </div>
+
+        <div class="overflow-y-auto custom-scroll flex-1 border border-slate-200 rounded-xl">
+          <table class="w-full text-right text-xs border-collapse">
+            <thead class="bg-slate-100 text-slate-700 font-bold sticky top-0">
+              <tr>
+                <th class="py-2.5 px-3">معرّف المحضر (ID)</th>
+                <th class="py-2.5 px-3">تاريخ التصدير</th>
+                <th class="py-2.5 px-3">القسم</th>
+                <th class="py-2.5 px-3 text-center">عدد البحوث</th>
+                <th class="py-2.5 px-3">الباحثين</th>
+                <th class="py-2.5 px-3 text-center">الحالة</th>
+                <th class="py-2.5 px-3 text-center">فحص المجلات</th>
+              </tr>
+            </thead>
+            <tbody id="archive-table-body" class="divide-y divide-slate-100">
+              <tr>
+                <td colspan="7" class="text-center py-6 text-slate-400">جاري تحميل السجلات...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================= تم نقل واجهة فحص البحوث إلى الشاشة الرئيسية (وليس نافذة منبثقة) ================= -->
+
+  <!-- ================= نافذة إعدادات Google Apps Script ================= -->
+  <div id="modal-settings" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden transition-opacity">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 mx-4 shadow-2xl border border-slate-100 text-right">
+      <div class="flex items-center justify-between border-b border-slate-200 pb-3 mb-4">
+        <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-cloud-arrow-up text-primary-600"></i>
+          <span>إعدادات ربط Google Apps Script</span>
+        </h3>
+        <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-slate-600">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <p class="text-xs text-slate-600 mb-4 leading-relaxed">
+        قم بلصق رابط الـ Web App الخاص بـ Google Apps Script هنا لتفعيل حفظ البيانات في Google Sheets وإرسال الإيميلات الحية تلقائياً.
+      </p>
+      <div class="space-y-3 mb-6">
+        <label class="block text-xs font-bold text-slate-700">رابط تطبيق الويب (Web App URL):</label>
+        <input type="url" id="setting-script-url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 focus:ring-2 focus:ring-primary-500 outline-none">
+        <p class="text-[11px] text-slate-400">في حال عدم توفر الرابط الآن، سيعمل النظام في وضع المحاكاة الذاتي مع تنزيل الـ PDF وتوليد الـ ID محلياً وسحابياً فور إضافته.</p>
+      </div>
+      <div class="flex items-center justify-end gap-2">
+        <button onclick="manualSyncCatalogs()" class="px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold transition flex items-center gap-2">
+          <i class="fa-solid fa-rotate"></i>
+          تحديث القوائم الآن
+        </button>
+        <button onclick="saveSettings()" class="px-5 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white text-xs font-bold transition">
+          حفظ الإعدادات
+        </button>
+      </div>
+      <p id="sync-status-msg" class="text-[11px] text-teal-700 mt-2 text-center hidden"></p>
+    </div>
+  </div>
+
+
+
+  <!-- ================= جافاسكريبت التطبيق ================= -->
+  <script>
+    // حالة التطبيق
+    let appState = {
+      selectedDepartment: "قسم التخطيط الحضري",
+      researchList: [],
+      committeeMembers: [],
+      currentReportId: "",
+      scriptUrl: localStorage.getItem('uok_script_url') || "",
+      systemPassword: "1122334455",
+      archiveData: []
+    };
+
+    // خريطة الإيميلات الرسمية
+    const DEPT_CONFIG = {
+      "قسم التخطيط الحضري": {
+        code: "URB",
+        name: "قسم التخطيط الحضري",
+        to: "urban.planning@uokufa.edu.iq, scholarships.physicalplanning@uokufa.edu.iq",
+        cc: "yasirs.radhi@uokufa.edu.iq"
+      },
+      "قسم التخطيط البيئي": {
+        code: "ENV",
+        name: "قسم التخطيط البيئي",
+        to: "environmental.planning@uokufa.edu.iq, scholarships.physicalplanning@uokufa.edu.iq",
+        cc: "yasirs.radhi@uokufa.edu.iq"
+      },
+      "قسم التخطيط الاقليمي": {
+        code: "REG",
+        name: "قسم التخطيط الإقليمي",
+        to: "regional.planning@uokufa.edu.iq, scholarships.physicalplanning@uokufa.edu.iq",
+        cc: "yasirs.radhi@uokufa.edu.iq"
+      }
+    };
+
+    // التهيئة عند تحميل الصفحة
+    document.addEventListener("DOMContentLoaded", () => {
+      // تعيين الشهر والسنة الحالية كقيمة افتراضية لتاريخ النشر
+      const now = new Date();
+      const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const publishInput = document.getElementById("input-publish-date");
+      if (publishInput) publishInput.value = currentMonthStr;
+
+      // ضبط رابط السكربت المخزن في الإعدادات إن وجد
+      if (appState.scriptUrl) {
+        document.getElementById("setting-script-url").value = appState.scriptUrl;
+      }
+
+      // تهيئة عرض أعضاء اللجنة
+      renderCommitteeMembers();
+
+      // تهيئة قائمة المجلات العراقية المعتمدة في IASJ للإكمال التلقائي
+      populateIasjDatalist();
+
+      // تحميل الكاش المحلي للقوائم المفترسة (يعمل offline بدون اتصال)
+      loadLocalCatalogCache();
+
+      // جلب التحديثات السحابية بصمت إن كان رابط Apps Script مضبوطاً
+      if (appState.scriptUrl) {
+        fetchCatalogUpdates(true);
+      }
+
+      const journalInput = document.getElementById("input-journal");
+      if (journalInput) {
+        journalInput.addEventListener("input", () => {
+          const val = journalInput.value.trim();
+          if (typeof findIasjJournal === 'function') {
+            const match = findIasjJournal(val);
+            if (match) {
+              const catSelect = document.getElementById("input-journal-category");
+              if (catSelect && catSelect.value === "مجلة عالمية") {
+                catSelect.value = "مجلة محلية";
+              }
+            }
+          }
+        });
+      }
+    });
+
+    function populateIasjDatalist() {
+      const datalist = document.getElementById('iasj-journals-datalist');
+      if (!datalist || typeof IASJ_MASTER_JOURNALS === 'undefined') return;
+      datalist.innerHTML = IASJ_MASTER_JOURNALS.map(j => `<option value="${escapeHtml(j.ar)}">${escapeHtml(j.en)}</option>`).join('');
+    }
+
+    // 1. الانتقال من خطوة اختيار القسم إلى استمارة الإدخال
+    function proceedToForm() {
+      const selectedRadio = document.querySelector('input[name="dept_selection"]:checked');
+      if (!selectedRadio) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'يرجى اختيار القسم أولاً',
+          text: 'حدد أحد الأقسام العلمية الثلاثة للمتابعة',
+          confirmButtonText: 'حسناً'
+        });
+        return;
+      }
+
+      appState.selectedDepartment = selectedRadio.value;
+      updateDeptView();
+
+      // تبديل الواجهات بسلاسة
+      document.getElementById("step-select-department").classList.add("hidden");
+      document.getElementById("step-main-form").classList.remove("hidden");
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // الرجوع لاختيار القسم
+    function backToDeptSelection() {
+      if (appState.researchList.length > 0) {
+        Swal.fire({
+          title: 'هل ترغب بتغيير القسم؟',
+          text: 'لديك بحوث مضافة في الجدول، تغيير القسم سيبقى البيانات مع تغيير الترويسة للقسم الجديد.',
+          icon: 'question',
+          showCancelButton: true,
+          confirmButtonText: 'نعم، تابع',
+          cancelButtonText: 'إلغاء'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            document.getElementById("step-main-form").classList.add("hidden");
+            document.getElementById("step-select-department").classList.remove("hidden");
+          }
+        });
+      } else {
+        document.getElementById("step-main-form").classList.add("hidden");
+        document.getElementById("step-select-department").classList.remove("hidden");
+      }
+    }
+
+    // تحديث نصوص الترويسات حسب القسم
+    function updateDeptView() {
+      const deptName = appState.selectedDepartment;
+      const displaySelectedDept = document.getElementById("display-selected-dept");
+      if (displaySelectedDept) displaySelectedDept.textContent = deptName;
+      const headerDeptName = document.getElementById("header-dept-name");
+      if (headerDeptName) headerDeptName.textContent = deptName;
+      updateNextSequence();
+    }
+
+    // حساب التسلسل التالي التلقائي
+    function updateNextSequence() {
+      const nextSeq = appState.researchList.length + 1;
+      document.getElementById("input-seq").value = nextSeq;
+    }
+
+    // 2. إضافة بحث جديد للجدول
+    function addResearchItem() {
+      const form = document.getElementById("research-form");
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+      }
+
+      const seq = appState.researchList.length + 1;
+      const title = document.getElementById("input-title").value.trim();
+      const journal = document.getElementById("input-journal").value.trim();
+      const journalCategory = document.getElementById("input-journal-category").value;
+      const citeScore = document.getElementById("input-citescore").value.trim() || "-";
+      const researchType = document.getElementById("input-research-type").value;
+      const authorName = document.getElementById("input-author").value.trim();
+      const authorOrder = document.getElementById("input-author-order").value;
+      const publishDate = document.getElementById("input-publish-date").value;
+      const link = document.getElementById("input-link").value.trim();
+
+      const newItem = {
+        id: Date.now(),
+        seq: seq,
+        title: title,
+        journal: journal,
+        journalCategory: journalCategory,
+        citeScore: citeScore,
+        researchType: researchType,
+        authorName: authorName,
+        authorOrder: authorOrder,
+        publishDate: publishDate,
+        link: link
+      };
+
+      appState.researchList.push(newItem);
+      renderTable();
+      resetFormInputs();
+
+      // إشعار سريع
+      const Toast = Swal.mixin({
+        toast: true,
+        position: 'top-start',
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true
+      });
+      Toast.fire({
+        icon: 'success',
+        title: `تمت إضافة البحث (ت: ${seq}) إلى الجدول بنجاح`
+      });
+    }
+
+    // تفريغ الحقول بعد الإضافة
+    function resetFormInputs() {
+      document.getElementById("input-title").value = "";
+      document.getElementById("input-journal").value = "";
+      document.getElementById("input-citescore").value = "";
+      document.getElementById("input-link").value = "";
+      updateNextSequence();
+    }
+
+    // حذف بحث من الجدول
+    function deleteResearchItem(id) {
+      appState.researchList = appState.researchList.filter(item => item.id !== id);
+      // إعادة ترقيم التسلسل تلقائياً
+      appState.researchList.forEach((item, index) => {
+        item.seq = index + 1;
+      });
+      renderTable();
+      updateNextSequence();
+    }
+
+    // عرض الجدول في الواجهة
+    function renderTable() {
+      const tbody = document.getElementById("research-table-body");
+      const badge = document.getElementById("badge-count");
+      badge.textContent = `${appState.researchList.length} بحث`;
+
+      if (appState.researchList.length === 0) {
+        tbody.innerHTML = `
+          <tr id="empty-row" class="text-center text-slate-400 py-8">
+            <td colspan="11" class="py-10">
+              <div class="flex flex-col items-center justify-center">
+                <i class="fa-regular fa-folder-open text-3xl mb-2 text-slate-300"></i>
+                <p class="text-slate-500 font-medium">لم يتم إضافة أي بحث حتى الآن</p>
+                <p class="text-xs text-slate-400">استخدم الاستمارة أعلاه لإدراج بيانات بحوث التدريسيين</p>
+              </div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = appState.researchList.map(item => `
+        <tr class="hover:bg-slate-50 transition-colors">
+          <td class="py-3 px-3 text-center font-bold text-slate-700 bg-slate-50/50">${item.seq}</td>
+          <td class="py-3 px-3 font-semibold text-slate-900 leading-snug">${escapeHtml(item.title)}</td>
+          <td class="py-3 px-3 text-slate-700">${escapeHtml(item.journal)}</td>
+          <td class="py-3 px-3">
+            <span class="inline-block px-2 py-0.5 rounded text-xs font-semibold ${getCategoryBadgeStyle(item.journalCategory)}">
+              ${escapeHtml(item.journalCategory)}
+            </span>
+          </td>
+          <td class="py-3 px-3 text-center font-mono font-bold text-slate-700">${escapeHtml(item.citeScore)}</td>
+          <td class="py-3 px-3 text-center">
+            <span class="inline-block px-2 py-0.5 rounded-full text-xs font-bold ${item.researchType === 'مشترك' ? 'bg-indigo-50 text-indigo-700' : 'bg-amber-50 text-amber-700'}">
+              ${escapeHtml(item.researchType)}
+            </span>
+          </td>
+          <td class="py-3 px-3 font-bold text-primary-900">${escapeHtml(item.authorName)}</td>
+          <td class="py-3 px-3 text-center text-slate-600">${escapeHtml(item.authorOrder)}</td>
+          <td class="py-3 px-3 text-center text-slate-600 font-mono">${escapeHtml(item.publishDate)}</td>
+          <td class="py-3 px-3 text-center">
+            <a href="${escapeHtml(item.link)}" target="_blank" rel="noopener noreferrer" title="زيارة رابط البحث" class="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-sky-50 text-sky-600 hover:bg-sky-600 hover:text-white transition">
+              <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
+            </a>
+          </td>
+          <td class="py-3 px-3 text-center">
+            <button onclick="deleteResearchItem(${item.id})" title="حذف البحث" class="text-rose-400 hover:text-rose-600 p-1.5 transition">
+              <i class="fa-regular fa-trash-can"></i>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function getCategoryBadgeStyle(cat) {
+      switch (cat) {
+        case 'مجلة عالمية': return 'bg-emerald-100 text-emerald-800';
+        case 'مجلة محلية': return 'bg-blue-100 text-blue-800';
+        case 'مؤتمر عالمي': return 'bg-purple-100 text-purple-800';
+        case 'مؤتمر محلي': return 'bg-amber-100 text-amber-800';
+        default: return 'bg-slate-100 text-slate-800';
+      }
+    }
+
+    // ================= دوال إدارة أعضاء اللجنة (الموقعين على المحضر) =================
+    function addCommitteeMember() {
+      const nameInput = document.getElementById("member-name-input");
+      const roleInput = document.getElementById("member-role-input");
+      const name = nameInput.value.trim();
+      const role = roleInput.value;
+
+      if (!name) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'يرجى إدخال اسم العضو أولاً',
+          confirmButtonText: 'حسناً'
+        });
+        return;
+      }
+
+      const newMember = {
+        id: Date.now(),
+        name: name,
+        role: role
+      };
+
+      appState.committeeMembers.push(newMember);
+      nameInput.value = "";
+      renderCommitteeMembers();
+
+      const Toast = Swal.mixin({
+        toast: true,
+        position: 'top-start',
+        showConfirmButton: false,
+        timer: 1500
+      });
+      Toast.fire({
+        icon: 'success',
+        title: `تمت إضافة (${name} - ${role}) إلى المحضر`
+      });
+    }
+
+    function deleteCommitteeMember(id) {
+      appState.committeeMembers = appState.committeeMembers.filter(m => m.id !== id);
+      renderCommitteeMembers();
+    }
+
+    function renderCommitteeMembers() {
+      const container = document.getElementById("members-display-container");
+      if (!container) return;
+
+      if (appState.committeeMembers.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full text-center py-4 text-slate-400 text-xs">
+            <i class="fa-solid fa-users text-lg mb-1 block text-slate-300"></i>
+            لم يتم إضافة أي عضو حتى الآن
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = appState.committeeMembers.map(m => `
+        <div class="bg-white border border-slate-200 rounded-xl p-3 shadow-sm relative flex flex-col justify-between group hover:border-primary-400 transition">
+          <button onclick="deleteCommitteeMember(${m.id})" title="حذف العضو" class="absolute top-2 left-2 text-slate-300 hover:text-rose-500 transition text-xs p-1">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+          <div>
+            <div class="flex items-center gap-1.5 mb-1.5">
+              <span class="inline-block px-2 py-0.5 rounded text-[11px] font-bold ${m.role === 'رئيساً' ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-sky-100 text-sky-800 border border-sky-200'}">
+                ${escapeHtml(m.role)}
+              </span>
+            </div>
+            <h5 class="text-xs sm:text-sm font-bold text-slate-800 pr-0.5">${escapeHtml(m.name)}</h5>
+          </div>
+          <div class="mt-3 pt-2 border-t border-dashed border-slate-200 text-[11px] text-slate-400">
+            <span>التوقيع: .....................</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // دالة التوزيع الذكي المتوازن للبحوث على الصفحات لمنع الفراغات الكبيرة وضمان تناسق المحضر
+    function paginateResearchItems(items) {
+      const n = items.length;
+      if (n === 0) return [[]];
+
+      // حتى 9 بحوث تتسع بشكل متكامل ومتزن في صفحة واحدة مع التواقيع
+      if (n <= 9) {
+        return [items];
+      }
+
+      // حساب عدد الصفحات الأمثل لمنع الفراغات الكبيرة:
+      // الصفحات الوسطى تستوعب 10 إلى 12 بحثاً بأريحية
+      // الصفحة الأخيرة تستوعب 6 إلى 8 بحوث مع كتلة التواقيع
+      let P = 2;
+      while ((P - 1) * 12 + 8 < n) {
+        P++;
+      }
+
+      // استهداف نصيب متزن للصفحة الأخيرة (بين 5 و 8 بحوث مرافقة للتواقيع)
+      let targetLast = Math.min(8, Math.max(5, Math.floor(n / P)));
+      let remaining = n - targetLast;
+      let normalPages = P - 1;
+
+      let baseNormal = Math.floor(remaining / normalPages);
+      let extra = remaining % normalPages;
+
+      let pageSizes = [];
+      for (let i = 0; i < normalPages; i++) {
+        pageSizes.push(baseNormal + (i < extra ? 1 : 0));
+      }
+      pageSizes.push(targetLast);
+
+      // إعادة الموازنة إذا دعت الحاجة لعدم تجاوز سعة الصفحة
+      while (pageSizes[pageSizes.length - 1] > 8 || pageSizes[0] > 13) {
+        P++;
+        targetLast = Math.min(8, Math.max(5, Math.floor(n / P)));
+        remaining = n - targetLast;
+        normalPages = P - 1;
+        baseNormal = Math.floor(remaining / normalPages);
+        extra = remaining % normalPages;
+        pageSizes = [];
+        for (let i = 0; i < normalPages; i++) {
+          pageSizes.push(baseNormal + (i < extra ? 1 : 0));
+        }
+        pageSizes.push(targetLast);
+      }
+
+      const pages = [];
+      let idx = 0;
+      for (const size of pageSizes) {
+        pages.push(items.slice(idx, idx + size));
+        idx += size;
+      }
+      return pages;
+    }
+
+    // دالة توليد الباركود / QR كود للرابط أو المعرف الرقمي DOI
+    function generateQrCodeDataUrl(url) {
+      if (!url) return '';
+      try {
+        if (typeof qrcode !== 'undefined') {
+          const qr = qrcode(0, 'M');
+          qr.addData(url);
+          qr.make();
+          return qr.createDataURL(2, 0);
+        }
+      } catch (e) {
+        console.warn("QR generation note:", e);
+      }
+      return `https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent(url)}`;
+    }
+
+    // دالة بناء جدول البحوث لصفحة معينة
+    function buildPrintTableForChunk(chunkItems) {
+      if (!chunkItems || chunkItems.length === 0) {
+        return `<table style="width:100%;font-size:11px;border-collapse:collapse;text-align:center;"><tr><td colspan="10" style="padding:18px;text-align:center;color:#64748b;border:1px solid #cbd5e1;">لا توجد بيانات</td></tr></table>`;
+      }
+      const rows = chunkItems.map(item => `
+        <tr>
+          <td style="border:1px solid #cbd5e1;padding:6px 3px;text-align:center;font-weight:700;background:#f8fafc;">${item.seq}</td>
+          <td style="border:1px solid #cbd5e1;padding:6px 7px;text-align:right;font-weight:700;color:#0f172a;">${escapeHtml(item.title)}</td>
+          <td style="border:1px solid #cbd5e1;padding:6px 7px;text-align:right;color:#334155;">${escapeHtml(item.journal)}</td>
+          <td style="border:1px solid #cbd5e1;padding:6px 4px;text-align:center;">${escapeHtml(item.journalCategory)}</td>
+          <td style="border:1px solid #cbd5e1;padding:6px 3px;text-align:center;font-weight:700;">${escapeHtml(item.citeScore)}</td>
+          <td style="border:1px solid #cbd5e1;padding:6px 3px;text-align:center;">${escapeHtml(item.researchType)}</td>
+          <td style="border:1px solid #cbd5e1;padding:6px 7px;text-align:right;font-weight:700;color:#0369a1;">${escapeHtml(item.authorName)}</td>
+          <td style="border:1px solid #cbd5e1;padding:6px 3px;text-align:center;">${escapeHtml(item.authorOrder)}</td>
+          <td style="border:1px solid #cbd5e1;padding:6px 3px;text-align:center;font-family:monospace;">${escapeHtml(item.publishDate)}</td>
+          <td style="border:1px solid #cbd5e1;padding:3px;text-align:center;vertical-align:middle;">
+            ${item.link ? `
+              <a href="${escapeHtml(item.link)}" target="_blank" title="${escapeHtml(item.link)}">
+                <img src="${generateQrCodeDataUrl(item.link)}" alt="QR" style="width:34px;height:34px;display:inline-block;border:1px solid #cbd5e1;border-radius:3px;padding:1px;background:#fff;" />
+              </a>
+            ` : '<span style="color:#94a3b8;font-size:10px;">-</span>'}
+          </td>
+        </tr>
+      `).join('');
+
+      return `
+        <table style="width:100%;font-size:11px;border-collapse:collapse;text-align:center;">
+          <thead>
+            <tr style="background:#0f172a;color:white;">
+              <th style="border:1px solid #334155;padding:7px 3px;text-align:center;width:24px;">ت</th>
+              <th style="border:1px solid #334155;padding:7px 6px;text-align:right;width:24%;">عنوان البحث</th>
+              <th style="border:1px solid #334155;padding:7px 6px;text-align:right;width:15%;">اسم المجلة</th>
+              <th style="border:1px solid #334155;padding:7px 4px;text-align:center;width:10%;">صنف المجلة</th>
+              <th style="border:1px solid #334155;padding:7px 3px;text-align:center;width:7%;">CiteScore</th>
+              <th style="border:1px solid #334155;padding:7px 3px;text-align:center;width:7%;">صنف البحث</th>
+              <th style="border:1px solid #334155;padding:7px 6px;text-align:right;width:13%;">اسم التدريسي</th>
+              <th style="border:1px solid #334155;padding:7px 3px;text-align:center;width:8%;">تسلسل الباحث</th>
+              <th style="border:1px solid #334155;padding:7px 3px;text-align:center;width:8%;">تاريخ النشر</th>
+              <th style="border:1px solid #334155;padding:7px 3px;text-align:center;width:48px;">الباركود / DOI</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows}
+          </tbody>
+        </table>
+      `;
+    }
+
+    // ===== دالة بناء نافذة الطباعة/PDF بمحرك المتصفح الأصلي (يدعم العربية وتوزيع الصفحات بشكل مثالي) =====
+    function openPdfPrintWindow(generatedId) {
+      const dept = appState.selectedDepartment;
+
+      // بناء قسم أعضاء اللجنة
+      const members = appState.committeeMembers;
+      let membersHtml = '';
+      if (members.length > 0) {
+        const colW = Math.floor(100 / members.length);
+        membersHtml = `
+          <div class="signatures-section" style="margin-top:28px;page-break-inside:avoid;break-inside:avoid;">
+            <table style="width:100%;border-collapse:collapse;text-align:center;">
+              <tr>
+                ${members.map(m => `
+                  <td style="width:${colW}%;padding:8px 6px;text-align:center;vertical-align:top;page-break-inside:avoid;break-inside:avoid;">
+                    <div style="font-size:12.5px;font-weight:800;color:#0f172a;margin-bottom:5px;">${escapeHtml(m.role)}</div>
+                    <div style="font-size:12px;font-weight:700;color:#0369a1;margin-bottom:24px;">${escapeHtml(m.name)}</div>
+                    <div style="font-size:11px;color:#334155;font-weight:600;">التوقيع: .................................</div>
+                  </td>
+                `).join('')}
+              </tr>
+            </table>
+          </div>
+        `;
+      } else {
+        membersHtml = `
+          <div class="signatures-section" style="margin-top:28px;page-break-inside:avoid;break-inside:avoid;">
+            <table style="width:100%;border-collapse:collapse;text-align:center;">
+              <tr>
+                <td style="width:50%;padding:10px;text-align:center;vertical-align:top;page-break-inside:avoid;break-inside:avoid;">
+                  <div style="font-size:12.5px;font-weight:800;color:#0f172a;margin-bottom:5px;">رئيساً</div>
+                  <div style="font-size:12px;margin-bottom:24px;">.................................</div>
+                  <div style="font-size:11px;color:#334155;">التوقيع: .................................</div>
+                </td>
+                <td style="width:50%;padding:10px;text-align:center;vertical-align:top;page-break-inside:avoid;break-inside:avoid;">
+                  <div style="font-size:12.5px;font-weight:800;color:#0f172a;margin-bottom:5px;">عضواً</div>
+                  <div style="font-size:12px;margin-bottom:24px;">.................................</div>
+                  <div style="font-size:11px;color:#334155;">التوقيع: .................................</div>
+                </td>
+              </tr>
+            </table>
+          </div>
+        `;
+      }
+
+      // توزيع بنود الأبحاث ذكياً على الصفحات
+      const pagedChunks = paginateResearchItems(appState.researchList || []);
+      const totalPages = pagedChunks.length;
+
+      // توليد صفحات الـ HTML
+      const pagesHtml = pagedChunks.map((chunk, pageIndex) => {
+        const pageNum = pageIndex + 1;
+        const isFirst = pageNum === 1;
+        const isLast = pageNum === totalPages;
+
+        return `
+          <div class="pdf-page">
+            <!-- ترويسة الصفحة مع رقم المحضر وترقيم الصفحات -->
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;border-bottom:2px solid #0284c7;padding-bottom:6px;">
+              <div>
+                <span style="font-size:13px;font-weight:800;color:#0f172a;">رقم المحضر : </span>
+                <span style="font-size:13px;font-weight:800;color:#0369a1;font-family:monospace;">${generatedId}</span>
+              </div>
+              <div style="font-size:11px;font-weight:700;color:#64748b;">
+                صفحة ${pageNum} من ${totalPages}
+              </div>
+            </div>
+
+            <!-- العبارة الإلزامية في الصفحة الأولى فقط -->
+            ${isFirst ? `
+              <div style="background:#f8fafc;border:1px solid #cbd5e1;border-right:4px solid #0284c7;padding:9px 12px;margin-bottom:14px;border-radius:6px;">
+                <p style="margin:0;font-size:12px;font-weight:800;color:#0f172a;line-height:1.9;text-align:right;">
+                  البحوث المقدمة من تدريسي ${escapeHtml(dept)} والتي خضعت لتدقيق لجنة الرصانة لأغراض عملية تقييم الأداء للعام الدراسي 2024-2025
+                </p>
+              </div>
+            ` : `
+              <div style="background:#f8fafc;border:1px solid #e2e8f0;padding:6px 12px;margin-bottom:12px;border-radius:4px;font-size:11.5px;font-weight:700;color:#475569;">
+                قائمة البحوث المدققة - ${escapeHtml(dept)}
+              </div>
+            `}
+
+            <!-- جدول بحوث هذه الصفحة -->
+            ${buildPrintTableForChunk(chunk)}
+
+            <!-- التواقيع تظهر فقط في نهاية الصفحة الأخيرة وتكون مرافقة لجزء من الأبحاث دائماً -->
+            ${isLast ? membersHtml : ''}
+          </div>
+        `;
+      }).join('');
+
+      const printHtml = `<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <title>محضر_رصانة_${generatedId}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Cairo', 'Segoe UI', Tahoma, Arial, sans-serif;
+      direction: rtl;
+      background: #e2e8f0;
+      color: #0f172a;
+    }
+    .toolbar {
+      background: linear-gradient(135deg, #075985, #0284c7);
+      color: white;
+      text-align: center;
+      padding: 14px 20px;
+      font-size: 13.5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+      font-family: 'Cairo', Arial;
+    }
+    .toolbar span { opacity: 0.9; }
+    .toolbar button {
+      background: white;
+      color: #075985;
+      border: none;
+      padding: 8px 24px;
+      border-radius: 8px;
+      font-family: 'Cairo', Arial;
+      font-weight: 800;
+      font-size: 13.5px;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      transition: background 0.2s;
+    }
+    .toolbar button:hover { background: #e0f2fe; }
+    .pdf-page {
+      background: white;
+      max-width: 1080px;
+      margin: 20px auto;
+      padding: 24px 30px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    table { border-collapse: collapse; width: 100%; }
+    tr { page-break-inside: avoid; break-inside: avoid; }
+    thead { display: table-header-group; }
+    tbody { display: table-row-group; }
+    .signatures-section {
+      margin-top: 25px;
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+      page-break-after: avoid !important;
+      break-after: avoid !important;
+      width: 100%;
+    }
+    @media print {
+      @page {
+        size: A4 landscape;
+        margin: 8mm 10mm;
+      }
+      .toolbar { display: none !important; }
+      body { background: white; margin: 0; }
+      .pdf-page {
+        margin: 0 !important;
+        padding: 4mm 6mm !important;
+        box-shadow: none !important;
+        max-width: none !important;
+        border-radius: 0 !important;
+        page-break-after: always !important;
+        break-after: page !important;
+      }
+      .pdf-page:last-child {
+        page-break-after: auto !important;
+        break-after: auto !important;
+      }
+      tr {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+      .signatures-section {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <span>لحفظ الملف بصيغة PDF: اضغط الزر ← اختر الطابعة "Save as PDF" أو "Microsoft Print to PDF" ← احفظ</span>
+    <button onclick="window.print()">🖨️ حفظ PDF / طباعة</button>
+  </div>
+  ${pagesHtml}
+</body>
+</html>`;
+
+      const printWindow = window.open('', '_blank', 'width=1200,height=850');
+      if (!printWindow) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'النافذة المنبثقة محجوبة',
+          html: `<p style="font-family:Cairo,Arial;direction:rtl;font-size:13px;">يرجى السماح لهذا الموقع بفتح النوافذ المنبثقة ثم أعد الضغط على الزر.<br><small style="color:#64748b;">في المتصفح: انقر على أيقونة الحجب في شريط العنوان وارسم ← السماح</small></p>`,
+          confirmButtonText: 'حسناً'
+        });
+        return;
+      }
+      printWindow.document.write(printHtml);
+      printWindow.document.close();
+      if (printWindow.focus) printWindow.focus();
+      setTimeout(() => {
+        try {
+          if (printWindow.document && printWindow.document.fonts && printWindow.document.fonts.ready) {
+            printWindow.document.fonts.ready.then(() => {
+              setTimeout(() => { if (printWindow.print) printWindow.print(); }, 500);
+            });
+          } else {
+            if (printWindow.print) printWindow.print();
+          }
+        } catch (e) {
+          if (printWindow.print) printWindow.print();
+        }
+      }, 700);
+    }
+
+    // 3. تصدير المحضر وتوليد الـ ID وإرسال البيانات للـ Google Apps Script
+    async function handleExportAndSend() {
+      if (appState.researchList.length === 0) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'الجدول فارغ!',
+          text: 'يرجى إضافة بحث واحد على الأقل قبل تصدير المحضر وإرساله.',
+          confirmButtonText: 'حسناً'
+        });
+        return;
+      }
+
+      // توليد معرف فريد للمحضر
+      const deptConf = DEPT_CONFIG[appState.selectedDepartment] || DEPT_CONFIG["قسم التخطيط الحضري"];
+      const now = new Date();
+      const datePart = now.toISOString().slice(0, 10).replace(/-/g, '');
+      const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+      const generatedId = `UOK-${deptConf.code}-${datePart}-${randomSuffix}`;
+      appState.currentReportId = generatedId;
+
+      // إرسال البيانات للـ Google Apps Script (بدون PDF — يولده المتصفح محلياً بجودة عالية)
+      if (appState.scriptUrl) {
+        try {
+          const payload = {
+            action: "save_report",
+            reportId: generatedId,
+            department: appState.selectedDepartment,
+            items: appState.researchList
+          };
+          fetch(appState.scriptUrl, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          }).catch(e => console.warn("GAS sync:", e));
+        } catch (e) {
+          console.warn("GAS:", e);
+        }
+      }
+
+      // حفظ محلي في المتصفح
+      saveReportToLocalStorage(generatedId, appState.selectedDepartment, appState.researchList);
+
+      // إظهار نافذة النجاح أولاً
+      showSuccessModal(generatedId, appState.selectedDepartment, deptConf);
+
+      // ثم فتح نافذة الطباعة/PDF تلقائياً
+      openPdfPrintWindow(generatedId);
+    }
+
+    // حفظ المحضر في سجل المتصفح الاحتياطي
+    function saveReportToLocalStorage(reportId, dept, items) {
+      let localArchive = JSON.parse(localStorage.getItem('uok_reports_archive') || '[]');
+      const now = new Date();
+      const authors = [...new Set(items.map(i => i.authorName))].join(", ");
+      localArchive.unshift({
+        reportId: reportId,
+        createdAt: now.toLocaleString('ar-IQ'),
+        department: dept,
+        academicYear: "2024-2025",
+        researchCount: items.length,
+        authors: authors,
+        status: "تم التصدير والإرسال",
+        items: items
+      });
+      localStorage.setItem('uok_reports_archive', JSON.stringify(localArchive));
+    }
+
+    // إظهار نافذة النجاح
+    function showSuccessModal(reportId, dept, deptConf) {
+      document.getElementById("modal-dept-label").textContent = `${dept}`;
+      document.getElementById("modal-report-id").textContent = reportId;
+      document.getElementById("modal-email-recipients").textContent = deptConf.to;
+      document.getElementById("modal-success").classList.remove("hidden");
+    }
+
+    function closeSuccessModal() {
+      document.getElementById("modal-success").classList.add("hidden");
+    }
+
+    function copyReportId() {
+      navigator.clipboard.writeText(appState.currentReportId).then(() => {
+        Swal.fire({
+          toast: true,
+          position: 'top-start',
+          icon: 'success',
+          title: 'تم نسخ معرّف المحضر (ID)',
+          showConfirmButton: false,
+          timer: 1500
+        });
+      });
+    }
+
+    // تنزيل ملف PDF الحالي — يفتح نافذة الطباعة بمحرك المتصفح الأصلي
+    function downloadCurrentPDF() {
+      if (appState.researchList.length === 0) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'لا توجد بيانات للتحميل',
+          text: 'أضف بحثاً واحداً على الأقل إلى الجدول قبل تنزيل الـ PDF.',
+          confirmButtonText: 'حسناً'
+        });
+        return;
+      }
+      openPdfPrintWindow(appState.currentReportId || 'جديد');
+    }
+
+
+    // دالة التحقق من رمز إعدادات الربط السحابي (565656)
+    function promptSettingsPassword() {
+      Swal.fire({
+        title: 'رمز أمان الإعدادات',
+        text: 'يرجى إدخال رمز الأمان للوصول إلى إعدادات الربط السحابي:',
+        input: 'password',
+        inputAttributes: {
+          autocapitalize: 'off',
+          autocorrect: 'off',
+          placeholder: 'أدخل الرمز (565656)...'
+        },
+        showCancelButton: true,
+        confirmButtonText: 'دخول',
+        cancelButtonText: 'إلغاء',
+        confirmButtonColor: '#0f172a',
+        cancelButtonColor: '#64748b',
+        preConfirm: (pass) => {
+          if (pass !== '565656') {
+            Swal.showValidationMessage('رمز الأمان غير صحيح!');
+            return false;
+          }
+          return true;
+        }
+      }).then((result) => {
+        if (result.isConfirmed) {
+          openSettingsModal();
+        }
+      });
+    }
+
+    // 4. نافذة سجل المحاضر المحمية بكلمة مرور (1122334455)
+    function openArchiveModal() {
+      document.getElementById("archive-password-input").value = "";
+      document.getElementById("archive-auth-section").classList.remove("hidden");
+      document.getElementById("archive-content-section").classList.add("hidden");
+      document.getElementById("modal-archive").classList.remove("hidden");
+    }
+
+    function closeArchiveModal() {
+      document.getElementById("modal-archive").classList.add("hidden");
+    }
+
+    async function verifyArchivePassword() {
+      const enteredPass = document.getElementById("archive-password-input").value.trim();
+      
+      // التحقق من الرمز المطلوب في الطلب: 1122334455
+      if (enteredPass !== appState.systemPassword) {
+        Swal.fire({
+          icon: 'error',
+          title: 'رمز المرور غير صحيح!',
+          text: 'لا تملك الصلاحية للوصول إلى سجل المحاضر.',
+          confirmButtonText: 'إعادة المحاولة'
+        });
+        return;
+      }
+
+      // إذا كانت كلمة المرور صحيحة
+      document.getElementById("archive-auth-section").classList.add("hidden");
+      document.getElementById("archive-content-section").classList.remove("hidden");
+      await fetchArchiveData();
+    }
+
+    async function fetchArchiveData() {
+      const tbody = document.getElementById("archive-table-body");
+      tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-400"><i class="fa-solid fa-spinner fa-spin ml-2"></i> جاري استرجاع المحاضر...</td></tr>`;
+
+      let records = [];
+
+      // إذا كان رابط Google Apps Script متاحاً، نسترجع منه
+      if (appState.scriptUrl) {
+        try {
+          const res = await fetch(appState.scriptUrl, {
+            method: 'POST',
+            body: JSON.stringify({
+              action: "get_records",
+              password: appState.systemPassword
+            })
+          });
+          const data = await res.json();
+          if (data && data.records) {
+            records = data.records;
+          }
+        } catch (e) {
+          console.warn("Could not fetch remote sheet directly due to CORS, falling back to local storage archive:", e);
+        }
+      }
+
+      // الدمج مع السجل المخزن محلياً
+      const local = JSON.parse(localStorage.getItem('uok_reports_archive') || '[]');
+      if (records.length === 0) {
+        records = local;
+      }
+
+      appState.archiveData = records;
+      renderArchiveTable(records);
+    }
+
+    function renderArchiveTable(records) {
+      const tbody = document.getElementById("archive-table-body");
+      if (!records || records.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" class="text-center py-8 text-slate-400">
+              <i class="fa-regular fa-folder-open text-2xl mb-1 block"></i>
+              لا توجد أي محاضر مسجلة حتى الآن
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = records.map(rec => `
+        <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+          <td class="py-2.5 px-3 font-mono font-bold text-primary-700">${escapeHtml(rec.reportId)}</td>
+          <td class="py-2.5 px-3 text-slate-600">${escapeHtml(rec.createdAt || '-')}</td>
+          <td class="py-2.5 px-3 font-bold text-slate-800">${escapeHtml(rec.department)}</td>
+          <td class="py-2.5 px-3 text-center"><span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-bold">${rec.researchCount || (rec.items ? rec.items.length : '-')}</span></td>
+          <td class="py-2.5 px-3 text-slate-600 truncate max-w-[200px]">${escapeHtml(rec.authors || '-')}</td>
+          <td class="py-2.5 px-3 text-center">
+            <span class="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full font-semibold">
+              <i class="fa-solid fa-circle-check text-[10px]"></i>
+              ${escapeHtml(rec.status || 'معتمد')}
+            </span>
+          </td>
+          <td class="py-2.5 px-3 text-center">
+            <button onclick="openResearchCheckerFromArchive('${escapeHtml(rec.reportId)}')" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold border border-emerald-200 transition">
+              <i class="fa-solid fa-microscope text-[10px]"></i>
+              <span>فحص</span>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function openResearchCheckerFromArchive(reportId) {
+      closeArchiveModal();
+      openResearchCheckerModal(reportId);
+    }
+
+    function filterArchiveRecords() {
+      const query = document.getElementById("archive-search-input").value.toLowerCase();
+      const filtered = appState.archiveData.filter(r => 
+        (r.reportId && r.reportId.toLowerCase().includes(query)) ||
+        (r.department && r.department.toLowerCase().includes(query)) ||
+        (r.authors && r.authors.toLowerCase().includes(query))
+      );
+      renderArchiveTable(filtered);
+    }
+
+    // 5. منظومة فحص وتدقيق المجلات والبحوث الأكاديمية للمحاضر المصدرة
+    let currentInspectedReport = null;
+    let previousActiveViewId = "step-main-form";
+
+    function openResearchCheckerModal(prefillId) {
+      const step1 = document.getElementById("step-select-department");
+      const step2 = document.getElementById("step-main-form");
+      const checkerView = document.getElementById("view-research-checker");
+      const mainContainer = document.getElementById("main-container");
+
+      if (step1 && !step1.classList.contains("hidden")) {
+        previousActiveViewId = "step-select-department";
+      } else if (step2 && !step2.classList.contains("hidden")) {
+        previousActiveViewId = "step-main-form";
+      }
+
+      // إخفاء الواجهات الرئيسية وإظهار واجهة الفحص كصفحة مستقلة وكبيرة
+      if (step1) step1.classList.add("hidden");
+      if (step2) step2.classList.add("hidden");
+      if (checkerView) checkerView.classList.remove("hidden");
+
+      // توسيع حاوية الصفحة لإعطاء أقصى مساحة مريحة للجداول
+      if (mainContainer) {
+        mainContainer.classList.remove("max-w-7xl");
+        mainContainer.classList.add("max-w-[96rem]");
+      }
+
+      renderCheckerRecentChips();
+
+      if (prefillId) {
+        document.getElementById("checker-report-id-input").value = prefillId;
+        executeReportInspection();
+      } else if (!document.getElementById("checker-report-id-input").value.trim() && appState.currentReportId) {
+        document.getElementById("checker-report-id-input").value = appState.currentReportId;
+      }
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function closeResearchCheckerModal() {
+      const checkerView = document.getElementById("view-research-checker");
+      const mainContainer = document.getElementById("main-container");
+
+      if (checkerView) checkerView.classList.add("hidden");
+
+      // استعادة الحجم الطبيعي للحاوية
+      if (mainContainer) {
+        mainContainer.classList.remove("max-w-[96rem]");
+        mainContainer.classList.add("max-w-7xl");
+      }
+
+      // الرجوع إلى الواجهة السابقة
+      const targetView = document.getElementById(previousActiveViewId) || document.getElementById("step-main-form");
+      if (targetView) {
+        targetView.classList.remove("hidden");
+      }
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // عرض قائمة المحاضر الأخيرة المصدرة كأزرار وصول سريع
+    function renderCheckerRecentChips() {
+      const container = document.getElementById("checker-recent-reports-chips");
+      if (!container) return;
+
+      let reports = [];
+      try {
+        const stored = localStorage.getItem('uok_reports_archive');
+        if (stored) reports = JSON.parse(stored);
+      } catch (e) {}
+
+      if (reports.length === 0 && appState.archiveData && appState.archiveData.length > 0) {
+        reports = appState.archiveData;
+      }
+
+      if (reports.length === 0) {
+        container.innerHTML = `
+          <span class="font-bold text-slate-500 flex items-center gap-1.5"><i class="fa-solid fa-clock-rotate-left text-slate-400"></i> قائمة المحاضر:</span>
+          <span class="text-slate-400 text-xs italic">لا توجد محاضر مصدرة بعد. يمكنك إدخال رقم المحضر يدوياً أو فحص الجدول الحالي.</span>
+        `;
+        return;
+      }
+
+      const recent = reports.slice(0, 5);
+      const chipsHtml = recent.map(r => `
+        <button type="button" onclick="selectCheckerReport('${escapeHtml(r.reportId)}')" 
+                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:border-emerald-400 hover:bg-emerald-50 text-slate-700 text-xs transition shadow-2xs font-mono">
+          <i class="fa-solid fa-file-invoice text-emerald-600 text-[10px]"></i>
+          <span class="font-bold">${escapeHtml(r.reportId)}</span>
+          <span class="text-[10px] text-slate-400">(${escapeHtml(r.department ? r.department.replace('قسم ', '') : '')})</span>
+        </button>
+      `).join('');
+
+      container.innerHTML = `
+        <span class="font-bold text-slate-500 flex items-center gap-1.5"><i class="fa-solid fa-clock-rotate-left text-slate-400"></i> قائمة المحاضر:</span>
+        <div class="flex flex-wrap items-center gap-1.5">${chipsHtml}</div>
+      `;
+    }
+
+    function selectCheckerReport(reportId) {
+      document.getElementById("checker-report-id-input").value = reportId;
+      executeReportInspection();
+    }
+
+    // فحص المحضر بالاعتماد على رقم المحضر (Report ID)
+    function executeReportInspection() {
+      const queryId = document.getElementById("checker-report-id-input").value.trim();
+      if (!queryId) {
+        Swal.fire({
+          icon: 'info',
+          title: 'يرجى إدخال رقم المحضر',
+          text: 'أدخل رقم المحضر (Report ID) في الشريط للبدء بفحص مجلاته وبحوثه.',
+          confirmButtonText: 'حسناً',
+          confirmButtonColor: '#0f172a'
+        });
+        return;
+      }
+
+      // البحث في الأرشيف المحلي (تطابق تام أو جزئي)
+      let foundReport = null;
+      try {
+        const stored = localStorage.getItem('uok_reports_archive');
+        if (stored) {
+          const archive = JSON.parse(stored);
+          foundReport = archive.find(r => r.reportId && r.reportId.toLowerCase() === queryId.toLowerCase())
+                     || archive.find(r => r.reportId && r.reportId.toLowerCase().includes(queryId.toLowerCase()));
+        }
+      } catch (e) {}
+
+      // البحث في سجل الأرشيف السحابي إن وجد
+      if (!foundReport && appState.archiveData && appState.archiveData.length > 0) {
+        foundReport = appState.archiveData.find(r => r.reportId && r.reportId.toLowerCase() === queryId.toLowerCase())
+                   || appState.archiveData.find(r => r.reportId && r.reportId.toLowerCase().includes(queryId.toLowerCase()));
+      }
+
+      // في حال تطابق مع المحضر الحالي قيد التحرير
+      if (!foundReport && appState.currentReportId && 
+          (appState.currentReportId.toLowerCase() === queryId.toLowerCase() || 
+           appState.currentReportId.toLowerCase().includes(queryId.toLowerCase()))) {
+        foundReport = {
+          reportId: appState.currentReportId,
+          department: appState.selectedDepartment,
+          academicYear: "2024-2025",
+          date: new Date().toLocaleString('ar-IQ'),
+          researchCount: appState.researchList.length,
+          items: appState.researchList
+        };
+      }
+
+      if (!foundReport) {
+        document.getElementById("checker-placeholder-state").classList.remove("hidden");
+        document.getElementById("checker-content-report").classList.add("hidden");
+        document.getElementById("btn-print-inspection-report").classList.add("hidden");
+        
+        Swal.fire({
+          icon: 'warning',
+          title: 'لم يتم العثور على المحضر',
+          html: `<p style="direction:rtl;font-size:13px;line-height:1.7;">لم يتم العثور على محضر برقم:<br><code style="background:#f1f5f9;color:#0284c7;padding:2px 8px;border-radius:4px;font-weight:bold;">${escapeHtml(queryId)}</code><br><br><small style="color:#64748b;">تأكد من كتابة الرقم بدقة، أو اختر من قائمة المحاضر المصدرة مؤخراً أسفل شريط البحث.</small></p>`,
+          confirmButtonText: 'حسناً',
+          confirmButtonColor: '#0f172a'
+        });
+        return;
+      }
+
+      renderInspectionResults(foundReport);
+    }
+
+    // فحص الجدول الحالي في الاستمارة
+    function inspectCurrentActiveTable() {
+      if (!appState.researchList || appState.researchList.length === 0) {
+        Swal.fire({
+          icon: 'info',
+          title: 'الجدول الحالي فارغ',
+          text: 'يرجى إضافة بحوث أولاً في استمارة الإدخال ليتم فحصها.',
+          confirmButtonText: 'حسناً',
+          confirmButtonColor: '#0f172a'
+        });
+        return;
+      }
+
+      const activeReport = {
+        reportId: appState.currentReportId || "محضر حالي (قيد التحرير)",
+        department: appState.selectedDepartment,
+        academicYear: "2024-2025",
+        date: "الآن (مسودة نشطة)",
+        researchCount: appState.researchList.length,
+        items: appState.researchList
+      };
+
+      document.getElementById("checker-report-id-input").value = activeReport.reportId;
+      renderInspectionResults(activeReport);
+    }
+
+    // عرض تقرير فحص المجلات والبحوث للمحضر
+    function renderInspectionResults(report) {
+      currentInspectedReport = report;
+      const items = report.items || [];
+
+      document.getElementById("checker-placeholder-state").classList.add("hidden");
+      document.getElementById("checker-content-report").classList.remove("hidden");
+      document.getElementById("btn-print-inspection-report").classList.remove("hidden");
+
+      // توقيت الفحص
+      const now = new Date();
+      document.getElementById("checker-inspect-time").textContent = `${now.toLocaleDateString('ar-IQ')} ${now.toLocaleTimeString('ar-IQ')}`;
+
+      // إحصائيات سريعة
+      const total = items.length;
+      const localCount = items.filter(i => (i.journalCategory || '').includes('محلية')).length;
+      const intlCount = items.filter(i => (i.journalCategory || '').includes('عالمية')).length;
+      const confCount = items.filter(i => (i.journalCategory || '').includes('مؤتمر')).length;
+      const withLinkCount = items.filter(i => i.link && i.link.trim().length > 0).length;
+
+      // بطاقة ملخص المحضر
+      const summaryCard = document.getElementById("checker-report-summary-card");
+      summaryCard.innerHTML = `
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4 mb-4">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center text-2xl">
+              <i class="fa-solid fa-clipboard-check"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-slate-400 font-semibold">رقم المحضر:</span>
+                <span class="font-mono font-bold text-sm sm:text-base text-primary-700 bg-sky-50 px-2 py-0.5 rounded-md border border-sky-200">${escapeHtml(report.reportId)}</span>
+              </div>
+              <h3 class="text-sm sm:text-base font-bold text-slate-900 mt-1">تقرير فحص البحوث</h3>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 text-xs">
+            <span class="bg-emerald-50 text-emerald-800 px-3 py-1.5 rounded-lg border border-emerald-200 font-bold">
+              ${total} بحوث مفحوصة
+            </span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+          <div class="bg-slate-50 border border-slate-200 p-3 rounded-xl text-center">
+            <span class="text-slate-400 block text-[11px] mb-1">إجمالي البحوث</span>
+            <span class="font-bold text-slate-900 text-base font-mono">${total}</span>
+          </div>
+          <div class="bg-amber-50/60 border border-amber-200 p-3 rounded-xl text-center">
+            <span class="text-amber-800 block text-[11px] mb-1">مجلات محلية</span>
+            <span class="font-bold text-amber-900 text-base font-mono">${localCount}</span>
+          </div>
+          <div class="bg-sky-50/60 border border-sky-200 p-3 rounded-xl text-center">
+            <span class="text-sky-800 block text-[11px] mb-1">مجلات عالمية</span>
+            <span class="font-bold text-sky-900 text-base font-mono">${intlCount}</span>
+          </div>
+          <div class="bg-emerald-50/60 border border-emerald-200 p-3 rounded-xl text-center">
+            <span class="text-emerald-800 block text-[11px] mb-1 font-mono">Check Link Status</span>
+            <span class="font-bold text-emerald-900 text-base font-mono">${withLinkCount}</span>
+          </div>
+        </div>
+      `;
+
+      // جدول تفاصيل الفحص
+      const tbody = document.getElementById("checker-table-body");
+      if (items.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-slate-400">لا توجد بحوث مسجلة في هذا المحضر.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = items.map((item, idx) => {
+        const isLocal = (item.journalCategory || '').includes('محلية');
+        const isIntl = (item.journalCategory || '').includes('عالمية');
+        const hasIasjLink = item.link && (item.link.includes('iasj.mohesr.gov.iq') || item.link.includes('iasj.net'));
+        const iasjMatch = (typeof findIasjJournal === 'function') ? findIasjJournal(item.journal) : null;
+        const predatoryCheck = (typeof checkPredatoryStatus === 'function') ? checkPredatoryStatus(item.journal) : null;
+        const scholarUrl = `https://scholar.google.com/scholar?q=${encodeURIComponent('"' + (item.title || '').trim() + '"')}`;
+        const cleanJournalTitle = (item.journal || '').replace(/[–—_\-\/\\()\[\]«»]/g, ' ').replace(/\s+/g, ' ').trim();
+
+        // خلية فحص واعتمادية IASJ
+        let iasjCellHtml = '';
+        if (isIntl && !hasIasjLink) {
+          iasjCellHtml = `
+            <div class="text-center">
+              <span class="text-slate-500 font-semibold text-[11px] block">مجلة عالمية</span>
+              <span class="text-[10px] text-slate-400">(خارج نطاق IASJ)</span>
+            </div>
+          `;
+        } else if (iasjMatch) {
+          iasjCellHtml = `
+            <div class="flex flex-col items-center gap-1.5">
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-[10px] border border-emerald-300" title="${escapeHtml(iasjMatch.journal.ar)} - ${escapeHtml(iasjMatch.journal.en)}">
+                <i class="fa-solid fa-circle-check text-emerald-600"></i> معتمدة في IASJ (#${iasjMatch.journal.id})
+              </span>
+              <a href="${iasjMatch.directUrl}" target="_blank" 
+                 class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-[10px] font-bold transition shadow-2xs"
+                 title="الانتقال المباشر للصفحة الرسمية للمجلة في بوابة وزارة التعليم العالي (IASJ)">
+                <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
+                <span>الصفحة الرسمية في IASJ</span>
+              </a>
+            </div>
+          `;
+        } else if (isLocal || hasIasjLink) {
+          iasjCellHtml = `
+            <div class="flex flex-col items-center gap-1.5">
+              ${hasIasjLink ? `
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-sky-100 text-sky-800 font-bold text-[10px] border border-sky-300">
+                  <i class="fa-solid fa-landmark"></i> منشور برابط IASJ
+                </span>
+              ` : `
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-bold text-[10px] border border-amber-300">
+                  مجلة محلية (استعلام ذكي)
+                </span>
+              `}
+              <a href="https://www.google.com/search?q=site:iasj.mohesr.gov.iq+%22${encodeURIComponent(cleanJournalTitle)}%22" target="_blank" 
+                 class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-bold transition shadow-2xs"
+                 title="البحث الذكي المباشر في صفحات وفهرس IASJ عبر استبعاد الحروف الخاصة">
+                <i class="fa-solid fa-magnifying-glass text-[9px]"></i>
+                <span>فحص فهرس IASJ</span>
+                <i class="fa-solid fa-arrow-up-right-from-square text-[9px] opacity-75"></i>
+              </a>
+              <a href="https://iasj.mohesr.gov.iq/journals/journals" target="_blank" 
+                 class="text-[9px] text-slate-400 hover:text-slate-600 hover:underline">
+                دليل مجلات الوزارة (506 مجلة)
+              </a>
+            </div>
+          `;
+        } else {
+          iasjCellHtml = `
+            <div class="text-center">
+              <span class="text-slate-500 text-[11px]">${escapeHtml(item.journalCategory || 'مؤتمر')}</span>
+            </div>
+          `;
+        }
+
+        // خلية فحص المجلات ودور النشر المفترسة والتجارية (الروابط الستة المعتمدة)
+        let predatoryCellHtml = '';
+        if (predatoryCheck && predatoryCheck.isPredatory) {
+          predatoryCellHtml = `
+            <div class="flex flex-col items-center gap-1.5 p-2 rounded-xl bg-rose-50 border border-rose-300 shadow-2xs">
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-rose-600 text-white font-bold text-[10px] shadow-sm animate-pulse" title="تحذير: مدرجة ضمن القوائم المحذورة">
+                <i class="fa-solid fa-triangle-exclamation"></i> مجلة / دار نشر مفترسة
+              </span>
+              <span class="text-[10px] text-rose-900 font-bold text-center leading-tight">
+                ${escapeHtml(predatoryCheck.sourceName)}
+              </span>
+              <a href="${escapeHtml(predatoryCheck.sourceUrl)}" target="_blank" 
+                 class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rose-700 hover:bg-rose-800 text-white text-[10px] font-bold transition shadow-xs mt-0.5"
+                 title="الانتقال المباشر إلى الموقع الذي أدرج المجلة">
+                <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
+                <span>عرض في موقع القائمة</span>
+              </a>
+            </div>
+          `;
+        } else if (isIntl) {
+          predatoryCellHtml = `
+            <div class="flex flex-col items-center gap-1">
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-[10px]" title="لم يتم العثور على المجلة ضمن السجلات المفترسة المعروفة">
+                <i class="fa-solid fa-shield-halved text-emerald-600"></i> غير مدرجة بالقوائم
+              </span>
+              
+              <!-- أزرار الفحص المباشر في القوائم الستة بالترتيب المطلوب -->
+              <div class="grid grid-cols-3 gap-1 mt-1 text-[9px] font-bold">
+                <a href="https://www.predatoryjournals.org/the-list/publishers" target="_blank" title="1. Predatory Publishers (دور النشر)" class="px-1 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-center">
+                  PJ دور
+                </a>
+                <a href="https://www.predatoryjournals.org/the-list/journals" target="_blank" title="2. Predatory Journals (المجلات)" class="px-1 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-center">
+                  PJ مجلات
+                </a>
+                <a href="https://jor.rdd.edu.iq/dis.php" target="_blank" title="3. المجلات المرفوضة في وزارة التعليم العالي (RDD)" class="px-1 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-center">
+                  RDD مجلات
+                </a>
+                <a href="https://beallslist.net/" target="_blank" title="4. دور النشر في Beall's List" class="px-1 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-center">
+                  Beall دور
+                </a>
+                <a href="https://beallslist.net/standalone-journals/" target="_blank" title="5. المجلات المنفردة في Beall's List" class="px-1 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-center">
+                  Beall مجلات
+                </a>
+                <a href="https://jor.rdd.edu.iq/dis_pub.php" target="_blank" title="6. دور النشر المرفوضة في وزارة التعليم العالي (RDD)" class="px-1 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-center">
+                  RDD دور
+                </a>
+              </div>
+            </div>
+          `;
+        } else {
+          predatoryCellHtml = `
+            <div class="text-center">
+              <span class="text-slate-400 text-[10px]">مجلة محلية (نطاق IASJ)</span>
+            </div>
+          `;
+        }
+
+        // نتيجة التدقيق والرصانة
+        let verdictBadge = '';
+        if (predatoryCheck && predatoryCheck.isPredatory) {
+          verdictBadge = `
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-300 animate-pulse">
+              <i class="fa-solid fa-ban text-rose-600"></i> تحذير: مجلة غير رصينة
+            </span>
+          `;
+        } else if (isIntl) {
+          verdictBadge = `
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-sky-50 text-sky-800 border border-sky-300">
+              <i class="fa-solid fa-globe text-sky-600"></i> منشور في مجلات عالمية
+            </span>
+          `;
+        } else if (iasjMatch || hasIasjLink) {
+          verdictBadge = `
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-300">
+              <i class="fa-solid fa-circle-check text-emerald-600"></i> معتمدة وزارياً (IASJ)
+            </span>
+          `;
+        } else if (isLocal) {
+          verdictBadge = `
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-300">
+              <i class="fa-solid fa-triangle-exclamation text-amber-600"></i> تدقيق محلي مطلوب
+            </span>
+          `;
+        } else {
+          verdictBadge = `
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-300">
+              <i class="fa-solid fa-file-lines text-slate-500"></i> وقائع مؤتمر
+            </span>
+          `;
+        }
+
+        return `
+          <tr class="hover:bg-slate-50/80 transition">
+            <td class="py-3 px-3 text-center font-bold font-mono text-slate-600 bg-slate-50/50">${item.seq || (idx + 1)}</td>
+            <td class="py-3 px-3">
+              <div class="font-bold text-slate-900 leading-snug mb-1">${escapeHtml(item.title)}</div>
+              <div class="flex items-center gap-2 text-[11px] text-slate-500">
+                <span class="text-primary-700 font-semibold"><i class="fa-solid fa-user-pen ml-1"></i>${escapeHtml(item.authorName)}</span>
+                <span>• تسلسل: ${escapeHtml(item.authorOrder)}</span>
+                <span>• تاريخ: ${escapeHtml(item.publishDate)}</span>
+              </div>
+            </td>
+            <td class="py-3 px-3">
+              <div class="font-bold text-slate-800">${escapeHtml(item.journal)}</div>
+              <div class="flex items-center gap-1.5 mt-1">
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-700">${escapeHtml(item.journalCategory)}</span>
+                ${item.citeScore ? `<span class="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">CS: ${escapeHtml(item.citeScore)}</span>` : ''}
+              </div>
+            </td>
+            <td class="py-3 px-3 text-center">${iasjCellHtml}</td>
+            <td class="py-3 px-3 text-center">${predatoryCellHtml}</td>
+            <td class="py-3 px-3 text-center">
+              <div class="flex flex-col items-center justify-center">
+                ${item.link ? `
+                  <a href="${escapeHtml(item.link)}" target="_blank" rel="noopener noreferrer"
+                     class="inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-lg bg-sky-600 hover:bg-sky-700 text-white text-[10px] font-bold shadow-2xs hover:shadow transition active:scale-95"
+                     title="الانتقال المباشر لرابط البحث أو المجلة">
+                    <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
+                    <span>رابط البحث</span>
+                  </a>
+                ` : '<span class="text-[10px] text-slate-400">لا يوجد رابط مدخل</span>'}
+              </div>
+            </td>
+            <td class="py-3 px-3 text-center">
+              <a href="${scholarUrl}" target="_blank" 
+                 class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-primary-700 text-[10px] font-bold transition border border-slate-200 shadow-2xs">
+                <i class="fa-brands fa-google text-amber-500"></i>
+                <span>فحص في Scholar</span>
+                <i class="fa-solid fa-arrow-up-right-from-square text-[9px] opacity-60"></i>
+              </a>
+            </td>
+            <td class="py-3 px-3 text-center">${verdictBadge}</td>
+          </tr>
+        `;
+      }).join('');
+
+    }
+
+    // طباعة تقرير فحص المجلات
+    function printInspectionReport() {
+      if (!currentInspectedReport) return;
+      window.print();
+    }
+
+    // 6. نافذة الإعدادات
+    function openSettingsModal() {
+      document.getElementById("setting-script-url").value = appState.scriptUrl;
+      document.getElementById("modal-settings").classList.remove("hidden");
+    }
+
+    function closeSettingsModal() {
+      document.getElementById("modal-settings").classList.add("hidden");
+    }
+
+    function saveSettings() {
+      const url = document.getElementById("setting-script-url").value.trim();
+      appState.scriptUrl = url;
+      localStorage.setItem('uok_script_url', url);
+      closeSettingsModal();
+      Swal.fire({
+        toast: true,
+        position: 'top-start',
+        icon: 'success',
+        title: 'تم حفظ رابط الإعدادات بنجاح',
+        showConfirmButton: false,
+        timer: 1500
+      });
+    }
+
+    // =====================================================================
+    // 7. منظومة التحديث السحابي للقوائم (المجلات المفترسة + IASJ)
+    // =====================================================================
+
+    /**
+     * جلب التحديثات السحابية بصمت (في الخلفية عند تحميل الصفحة)
+     * @param {boolean} silent - true = لا يُظهر رسائل للمستخدم
+     */
+    async function fetchCatalogUpdates(silent = true) {
+      if (!appState.scriptUrl) return;
+      try {
+        const res = await fetch(appState.scriptUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'get_catalog_updates' })
+        });
+        const data = await res.json();
+        if (data && data.success && Array.isArray(data.entries) && data.entries.length > 0) {
+          // حفظ التحديثات في localStorage
+          localStorage.setItem('uok_custom_predatory', JSON.stringify(data.entries));
+          // تحديث المتغير العالمي المستخدم في checkPredatoryStatus
+          window.CUSTOM_PREDATORY_ENTRIES = data.entries;
+          if (!silent) {
+            Swal.fire({
+              toast: true,
+              position: 'top-start',
+              icon: 'success',
+              title: `✅ تم تحميل ${data.entries.length} إدخال محدّث من القوائم السحابية`,
+              showConfirmButton: false,
+              timer: 3000
+            });
+            // إعادة فحص المحضر الحالي إن كان مفتوحاً
+            if (currentInspectedReport) {
+              renderInspectionResults(currentInspectedReport);
+            }
+          }
+        } else if (!silent && data && !data.success) {
+          Swal.fire({
+            toast: true,
+            position: 'top-start',
+            icon: 'info',
+            title: 'لا توجد تحديثات جديدة في القوائم السحابية حالياً',
+            showConfirmButton: false,
+            timer: 2500
+          });
+        }
+      } catch (err) {
+        if (!silent) {
+          Swal.fire({
+            toast: true,
+            position: 'top-start',
+            icon: 'error',
+            title: 'تعذّر الاتصال بـ Google Apps Script للمزامنة',
+            showConfirmButton: false,
+            timer: 3000
+          });
+          console.warn('fetchCatalogUpdates error:', err);
+        }
+      }
+    }
+
+    /**
+     * تحديث يدوي للقوائم مع مزامنة فورية من المواقع (يستدعي sync_catalogs_now في السيرفر)
+     * يُظهر رسالة تأكيد ثم يطلب من Apps Script إعادة السحب من المواقع
+     */
+    async function manualSyncCatalogs() {
+      if (!appState.scriptUrl) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'رابط Google Apps Script غير مضبوط',
+          html: `<p style="direction:rtl;font-size:13px;line-height:1.7">يرجى إضافة رابط الـ Web App أولاً من خلال <b>الإعدادات</b> (زر ⚙ في الشريط العلوي).<br><small style="color:#64748b">بدون الرابط لا يمكن الاتصال بقاعدة البيانات السحابية.</small></p>`,
+          confirmButtonText: 'فهمت',
+          confirmButtonColor: '#0f172a'
+        });
+        return;
+      }
+
+      // تحديث رسالة الحالة في نافذة الإعدادات (إن كانت مفتوحة)
+      const syncMsg = document.getElementById('sync-status-msg');
+      if (syncMsg) {
+        syncMsg.textContent = '⏳ جاري التحديث...';
+        syncMsg.classList.remove('hidden');
+      }
+
+      // تغيير أيقونة زر المزامنة إلى الدوران
+      const syncBtn = document.getElementById('btn-sync-catalogs');
+      if (syncBtn) {
+        syncBtn.disabled = true;
+        syncBtn.innerHTML = `<i class="fa-solid fa-rotate fa-spin"></i><span>جاري التحديث...</span>`;
+      }
+
+      try {
+        // أولاً: اطلب من Apps Script إعادة المزامنة الفورية من المواقع
+        const syncRes = await fetch(appState.scriptUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'sync_catalogs_now' })
+        });
+        const syncData = await syncRes.json();
+
+        // ثانياً: اجلب القائمة المحدثة بعد المزامنة
+        await fetchCatalogUpdates(true);
+
+        const added = (syncData && syncData.added) ? syncData.added : 0;
+        const msg = added > 0
+          ? `✅ تمت المزامنة بنجاح: تم إضافة ${added} مدخل جديد إلى قوائم المجلات المفترسة.`
+          : `✅ القوائم محدثة بالفعل — لا توجد إضافات جديدة.`;
+
+        if (syncMsg) {
+          syncMsg.textContent = msg;
+        }
+
+        Swal.fire({
+          toast: true,
+          position: 'top-start',
+          icon: 'success',
+          title: msg,
+          showConfirmButton: false,
+          timer: 4000
+        });
+
+        // إعادة فحص المحضر الحالي إن كان مفتوحاً بعد تحميل التحديثات
+        if (currentInspectedReport) {
+          renderInspectionResults(currentInspectedReport);
+        }
+
+      } catch (err) {
+        const errMsg = 'تعذّر الاتصال بـ Google Apps Script — تأكد من صحة الرابط وإعدادات النشر.';
+        if (syncMsg) syncMsg.textContent = '❌ ' + errMsg;
+        Swal.fire({
+          toast: true,
+          position: 'top-start',
+          icon: 'error',
+          title: errMsg,
+          showConfirmButton: false,
+          timer: 4000
+        });
+        console.warn('manualSyncCatalogs error:', err);
+      } finally {
+        // استعادة زر المزامنة
+        if (syncBtn) {
+          syncBtn.disabled = false;
+          syncBtn.innerHTML = `<i class="fa-solid fa-rotate"></i><span>تحديث القوائم السحابية</span>`;
+        }
+      }
+    }
+
+    /**
+     * تحميل التحديثات المخزنة محلياً في localStorage عند بدء تشغيل الصفحة
+     * (تعمل offline حتى بدون اتصال بالسيرفر)
+     */
+    function loadLocalCatalogCache() {
+      try {
+        const cached = localStorage.getItem('uok_custom_predatory');
+        if (cached) {
+          const entries = JSON.parse(cached);
+          if (Array.isArray(entries) && entries.length > 0) {
+            window.CUSTOM_PREDATORY_ENTRIES = entries;
+          }
+        }
+      } catch (e) {
+        console.warn('loadLocalCatalogCache:', e);
+      }
+    }
+
+    // دالة مساعدة لمنع XSS
+    function escapeHtml(text) {
+      if (!text) return '';
+      return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+  </script>
+</body>
+</html>
