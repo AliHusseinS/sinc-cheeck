@@ -1640,11 +1640,11 @@
 
       let records = [];
 
-      // إذا كان رابط Google Apps Script متاحاً، نسترجع منه
       if (appState.scriptUrl) {
         try {
           const res = await fetch(appState.scriptUrl, {
             method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               action: "get_records",
               password: appState.systemPassword
@@ -1653,20 +1653,52 @@
           const data = await res.json();
           if (data && data.records) {
             records = data.records;
+
+            // ربط تفاصيل البحوث بكل محضر من حقل items الذي يرسله السيرفر
+            if (data.items && Array.isArray(data.items)) {
+              records = records.map(rec => {
+                const recItems = data.items.filter(it =>
+                  String(it.reportId).trim() === String(rec.reportId).trim()
+                );
+                return Object.assign({}, rec, { items: recItems });
+              });
+            }
+
+            // تحديث localStorage مع الحفاظ على items المحلية للمحاضر غير الموجودة في السيرفر
+            const localArchive = JSON.parse(localStorage.getItem('uok_reports_archive') || '[]');
+            const merged = mergeArchiveRecords(records, localArchive);
+            localStorage.setItem('uok_reports_archive', JSON.stringify(merged));
           }
         } catch (e) {
-          console.warn("Could not fetch remote sheet directly due to CORS, falling back to local storage archive:", e);
+          console.warn("تعذر الاتصال بـ Google Apps Script:", e);
         }
       }
 
-      // الدمج مع السجل المخزن محلياً
-      const local = JSON.parse(localStorage.getItem('uok_reports_archive') || '[]');
       if (records.length === 0) {
-        records = local;
+        records = JSON.parse(localStorage.getItem('uok_reports_archive') || '[]');
       }
 
       appState.archiveData = records;
       renderArchiveTable(records);
+    }
+
+    // دمج سجلات السيرفر مع السجل المحلي مع الحفاظ على بيانات items
+    function mergeArchiveRecords(serverRecords, localRecords) {
+      const map = {};
+      localRecords.forEach(function(r) { if (r.reportId) map[r.reportId] = r; });
+      serverRecords.forEach(function(r) {
+        if (r.reportId) {
+          const existing = map[r.reportId];
+          map[r.reportId] = Object.assign({}, r, {
+            items: (r.items && r.items.length > 0)
+              ? r.items
+              : (existing && existing.items ? existing.items : [])
+          });
+        }
+      });
+      return Object.values(map).sort(function(a, b) {
+        return String(b.reportId).localeCompare(String(a.reportId));
+      });
     }
 
     function renderArchiveTable(records) {
@@ -1826,7 +1858,7 @@
     }
 
     // فحص المحضر بالاعتماد على رقم المحضر (Report ID)
-    function executeReportInspection() {
+    async function executeReportInspection() {
       const queryId = document.getElementById("checker-report-id-input").value.trim();
       if (!queryId) {
         Swal.fire({
@@ -1839,7 +1871,7 @@
         return;
       }
 
-      // البحث في الأرشيف المحلي (تطابق تام أو جزئي)
+      // 1. البحث في الأرشيف المحلي (تطابق تام أو جزئي)
       let foundReport = null;
       try {
         const stored = localStorage.getItem('uok_reports_archive');
@@ -1850,15 +1882,15 @@
         }
       } catch (e) {}
 
-      // البحث في سجل الأرشيف السحابي إن وجد
+      // 2. البحث في appState.archiveData (البيانات المحمّلة من السيرفر في الجلسة الحالية)
       if (!foundReport && appState.archiveData && appState.archiveData.length > 0) {
         foundReport = appState.archiveData.find(r => r.reportId && r.reportId.toLowerCase() === queryId.toLowerCase())
                    || appState.archiveData.find(r => r.reportId && r.reportId.toLowerCase().includes(queryId.toLowerCase()));
       }
 
-      // في حال تطابق مع المحضر الحالي قيد التحرير
-      if (!foundReport && appState.currentReportId && 
-          (appState.currentReportId.toLowerCase() === queryId.toLowerCase() || 
+      // 3. في حال تطابق مع المحضر الحالي قيد التحرير
+      if (!foundReport && appState.currentReportId &&
+          (appState.currentReportId.toLowerCase() === queryId.toLowerCase() ||
            appState.currentReportId.toLowerCase().includes(queryId.toLowerCase()))) {
         foundReport = {
           reportId: appState.currentReportId,
@@ -1870,11 +1902,81 @@
         };
       }
 
+      // 4. إن وجد المحضر لكن بدون items، حاول جلبها من السيرفر
+      if (foundReport && (!foundReport.items || foundReport.items.length === 0) && appState.scriptUrl) {
+        try {
+          document.getElementById("checker-placeholder-state").classList.remove("hidden");
+          document.getElementById("checker-content-report").classList.add("hidden");
+          document.getElementById("checker-placeholder-state").querySelector("h4").textContent = "جاري جلب تفاصيل البحوث من السيرفر...";
+
+          const res = await fetch(appState.scriptUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: "get_records", password: appState.systemPassword })
+          });
+          const data = await res.json();
+          if (data && data.items && Array.isArray(data.items)) {
+            const recItems = data.items.filter(it =>
+              String(it.reportId).trim() === String(foundReport.reportId).trim()
+            );
+            foundReport = Object.assign({}, foundReport, { items: recItems });
+            // تحديث appState.archiveData وlocalStorage
+            appState.archiveData = (appState.archiveData || []).map(r =>
+              r.reportId === foundReport.reportId ? Object.assign({}, r, { items: recItems }) : r
+            );
+            try {
+              const localArc = JSON.parse(localStorage.getItem('uok_reports_archive') || '[]');
+              const updatedArc = localArc.map(r =>
+                r.reportId === foundReport.reportId ? Object.assign({}, r, { items: recItems }) : r
+              );
+              localStorage.setItem('uok_reports_archive', JSON.stringify(updatedArc));
+            } catch(e2) {}
+          }
+          document.getElementById("checker-placeholder-state").querySelector("h4").textContent = "بانتظار إدخال رقم المحضر للفحص";
+        } catch (e) {
+          console.warn("تعذر جلب items من السيرفر:", e);
+        }
+      }
+
+      // 5. إن لم يوجد المحضر محلياً، حاول جلبه من السيرفر مباشرة
+      if (!foundReport && appState.scriptUrl) {
+        try {
+          document.getElementById("checker-placeholder-state").classList.remove("hidden");
+          document.getElementById("checker-content-report").classList.add("hidden");
+          document.getElementById("checker-placeholder-state").querySelector("h4").textContent = "جاري البحث في السجل السحابي...";
+
+          const res = await fetch(appState.scriptUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: "get_records", password: appState.systemPassword })
+          });
+          const data = await res.json();
+          if (data && data.records) {
+            const remoteRec = data.records.find(r => r.reportId && r.reportId.toLowerCase() === queryId.toLowerCase())
+                           || data.records.find(r => r.reportId && r.reportId.toLowerCase().includes(queryId.toLowerCase()));
+            if (remoteRec && data.items) {
+              const recItems = data.items.filter(it =>
+                String(it.reportId).trim() === String(remoteRec.reportId).trim()
+              );
+              foundReport = Object.assign({}, remoteRec, { items: recItems });
+              // حفظ في appState وlocalStorage
+              appState.archiveData = mergeArchiveRecords(data.records.map(rec => {
+                const its = (data.items || []).filter(it => String(it.reportId).trim() === String(rec.reportId).trim());
+                return Object.assign({}, rec, { items: its });
+              }), JSON.parse(localStorage.getItem('uok_reports_archive') || '[]'));
+              localStorage.setItem('uok_reports_archive', JSON.stringify(appState.archiveData));
+            }
+          }
+          document.getElementById("checker-placeholder-state").querySelector("h4").textContent = "بانتظار إدخال رقم المحضر للفحص";
+        } catch (e) {
+          console.warn("تعذر البحث في السيرفر:", e);
+        }
+      }
+
       if (!foundReport) {
         document.getElementById("checker-placeholder-state").classList.remove("hidden");
         document.getElementById("checker-content-report").classList.add("hidden");
         document.getElementById("btn-print-inspection-report").classList.add("hidden");
-        
         Swal.fire({
           icon: 'warning',
           title: 'لم يتم العثور على المحضر',
@@ -2123,7 +2225,7 @@
         } else if (iasjMatch || hasIasjLink) {
           verdictBadge = `
             <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-300">
-              <i class="fa-solid fa-circle-check text-emerald-600"></i> معتمدة وزارياً (IASJ)
+              <i class="fa-solid fa-circle-check text-emerald-600"></i> مجلة موثوقة (IASJ)
             </span>
           `;
         } else if (isLocal) {
