@@ -768,7 +768,7 @@
       researchList: [],
       committeeMembers: [],
       currentReportId: "",
-      scriptUrl: localStorage.getItem('uok_script_url') || "https://script.google.com/macros/s/AKfycbwUhERzfL6CCOsLsku9nMUOkg3oH6cmihNo1zqReUzIHec7ucEoLY7NeexFBAqllhUvjw/exec",
+      scriptUrl: localStorage.getItem('uok_script_url') || "https://script.google.com/macros/s/AKfycbwjqWcoENUGcBxYs_4wG-mOUik281DM8fFpc-vrFCIYlD_daIsN1tw0NjR1sR8a4Wby8g/exec",
       systemPassword: "1122334455",
       archiveData: []
     };
@@ -1015,7 +1015,7 @@
           </td>
           <td class="py-3 px-3 font-bold text-primary-900">${escapeHtml(item.authorName)}</td>
           <td class="py-3 px-3 text-center text-slate-600">${escapeHtml(item.authorOrder)}</td>
-          <td class="py-3 px-3 text-center text-slate-600 font-mono">${escapeHtml(item.publishDate)}</td>
+          <td class="py-3 px-3 text-center text-slate-600 font-mono">${formatPublishDate(item.publishDate)}</td>
           <td class="py-3 px-3 text-center">
             <a href="${escapeHtml(item.link)}" target="_blank" rel="noopener noreferrer" title="زيارة رابط البحث" class="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-sky-50 text-sky-600 hover:bg-sky-600 hover:text-white transition">
               <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
@@ -1204,7 +1204,7 @@
           <td style="border:1px solid #cbd5e1;padding:6px 3px;text-align:center;">${escapeHtml(item.researchType)}</td>
           <td style="border:1px solid #cbd5e1;padding:6px 7px;text-align:right;font-weight:700;color:#0369a1;">${escapeHtml(item.authorName)}</td>
           <td style="border:1px solid #cbd5e1;padding:6px 3px;text-align:center;">${escapeHtml(item.authorOrder)}</td>
-          <td style="border:1px solid #cbd5e1;padding:6px 3px;text-align:center;font-family:monospace;">${escapeHtml(item.publishDate)}</td>
+          <td style="border:1px solid #cbd5e1;padding:6px 3px;text-align:center;font-family:monospace;">${formatPublishDate(item.publishDate)}</td>
           <td style="border:1px solid #cbd5e1;padding:3px;text-align:center;vertical-align:middle;">
             ${item.link ? `
               <a href="${escapeHtml(item.link)}" target="_blank" title="${escapeHtml(item.link)}">
@@ -1464,7 +1464,7 @@
       }, 700);
     }
 
-    // 3. تصدير المحضر وتوليد الـ ID وإرسال البيانات للـ Google Apps Script
+    // 3. تصدير المحضر — يعرض لوحة اختيار المستلمين أولاً ثم يرسل ويصدر
     async function handleExportAndSend() {
       if (appState.researchList.length === 0) {
         Swal.fire({
@@ -1476,22 +1476,76 @@
         return;
       }
 
-      // توليد معرف فريد للمحضر
       const deptConf = DEPT_CONFIG[appState.selectedDepartment] || DEPT_CONFIG["قسم التخطيط الحضري"];
+
+      // --- لوحة اختيار المستلمين ---
+      const { value: recipients, isConfirmed } = await Swal.fire({
+        title: '<span style="font-size:16px;font-weight:800;">اختر جهات الإرسال</span>',
+        html: `
+          <div style="direction:rtl;text-align:right;font-family:inherit;padding:4px 0;">
+            <p style="font-size:12px;color:#64748b;margin-bottom:14px;">حدّد الجهات التي سيُرسَل إليها بريد إلكتروني بالمحضر:</p>
+            <label style="display:flex;align-items:center;gap:10px;margin-bottom:10px;cursor:pointer;padding:10px;border-radius:10px;border:1.5px solid #e2e8f0;background:#f8fafc;">
+              <input type="checkbox" id="chk-dept" checked style="width:17px;height:17px;accent-color:#0284c7;">
+              <span>
+                <strong style="color:#0f172a;font-size:13px;">📬 القسم المعني</strong><br>
+                <small style="color:#64748b;font-size:11px;">${deptConf.to.split(',')[0].trim()}</small>
+              </span>
+            </label>
+            <label style="display:flex;align-items:center;gap:10px;margin-bottom:10px;cursor:pointer;padding:10px;border-radius:10px;border:1.5px solid #e2e8f0;background:#f8fafc;">
+              <input type="checkbox" id="chk-sci" checked style="width:17px;height:17px;accent-color:#0284c7;">
+              <span>
+                <strong style="color:#0f172a;font-size:13px;">🏛️ مكتب المعاون العلمي</strong><br>
+                <small style="color:#64748b;font-size:11px;">yasirs.radhi@uokufa.edu.iq</small>
+              </span>
+            </label>
+            <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px;border-radius:10px;border:1.5px solid #e2e8f0;background:#f8fafc;">
+              <input type="checkbox" id="chk-sch" style="width:17px;height:17px;accent-color:#0284c7;">
+              <span>
+                <strong style="color:#0f172a;font-size:13px;">🎓 قسم الابتعاث والدراسات العليا</strong><br>
+                <small style="color:#64748b;font-size:11px;">scholarships.physicalplanning@uokufa.edu.iq</small>
+              </span>
+            </label>
+          </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: '📤 تصدير وإرسال',
+        cancelButtonText: 'إلغاء',
+        confirmButtonColor: '#16a34a',
+        cancelButtonColor: '#64748b',
+        preConfirm: () => {
+          return {
+            dept: document.getElementById('chk-dept').checked,
+            sci:  document.getElementById('chk-sci').checked,
+            sch:  document.getElementById('chk-sch').checked
+          };
+        }
+      });
+
+      if (!isConfirmed) return;
+
+      // بناء قائمة المستلمين بناءً على الاختيار
+      const toList = [];
+      if (recipients.dept) toList.push(deptConf.to.split(',')[0].trim());
+      if (recipients.sci)  toList.push('yasirs.radhi@uokufa.edu.iq');
+      if (recipients.sch)  toList.push('scholarships.physicalplanning@uokufa.edu.iq');
+
+      // توليد معرف فريد للمحضر
       const now = new Date();
-      const datePart = now.toISOString().slice(0, 10).replace(/-/g, '');
+      const datePart = now.toFullDateStr ? now.toFullDateStr() : now.toLocaleDateString('en-CA').replace(/-/g, '');
+      const ymd = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
       const randomSuffix = Math.floor(1000 + Math.random() * 9000);
-      const generatedId = `UOK-${deptConf.code}-${datePart}-${randomSuffix}`;
+      const generatedId = `UOK-${deptConf.code}-${ymd}-${randomSuffix}`;
       appState.currentReportId = generatedId;
 
-      // إرسال البيانات للـ Google Apps Script (بدون PDF — يولده المتصفح محلياً بجودة عالية)
+      // إرسال للـ Google Apps Script مع قائمة المستلمين
       if (appState.scriptUrl) {
         try {
           const payload = {
             action: "save_report",
             reportId: generatedId,
             department: appState.selectedDepartment,
-            items: appState.researchList
+            items: appState.researchList,
+            recipients: toList.join(', ')
           };
           fetch(appState.scriptUrl, {
             method: 'POST',
@@ -1503,13 +1557,14 @@
         }
       }
 
-      // حفظ محلي في المتصفح
+      // حفظ محلي
       saveReportToLocalStorage(generatedId, appState.selectedDepartment, appState.researchList);
 
-      // إظهار نافذة النجاح أولاً
-      showSuccessModal(generatedId, appState.selectedDepartment, deptConf);
+      // نافذة النجاح مع المستلمين الفعليين
+      const customDeptConf = Object.assign({}, deptConf, { to: toList.join(', ') || 'لم يتم اختيار أي جهة' });
+      showSuccessModal(generatedId, appState.selectedDepartment, customDeptConf);
 
-      // ثم فتح نافذة الطباعة/PDF تلقائياً
+      // فتح نافذة الطباعة/PDF
       openPdfPrintWindow(generatedId);
     }
 
@@ -2246,7 +2301,7 @@
               <div class="flex items-center gap-2 text-[11px] text-slate-500">
                 <span class="text-primary-700 font-semibold"><i class="fa-solid fa-user-pen ml-1"></i>${escapeHtml(item.authorName)}</span>
                 <span>• تسلسل: ${escapeHtml(item.authorOrder)}</span>
-                <span>• تاريخ: ${escapeHtml(item.publishDate)}</span>
+                <span>• تاريخ: ${formatPublishDate(item.publishDate)}</span>
               </div>
             </td>
             <td class="py-3 px-3">
@@ -2285,10 +2340,372 @@
 
     }
 
-    // طباعة تقرير فحص المجلات
+    // طباعة وتصدير تقرير فحص المجلات والبحوث كملف PDF
     function printInspectionReport() {
-      if (!currentInspectedReport) return;
-      window.print();
+      if (!currentInspectedReport) {
+        Swal.fire({
+          icon: 'info',
+          title: 'لا يوجد تقرير مفحوص حالياً',
+          text: 'يرجى إدخال رقم المحضر وفحصه أولاً قبل الطباعة.',
+          confirmButtonText: 'حسناً',
+          confirmButtonColor: '#0f172a'
+        });
+        return;
+      }
+
+      const report = currentInspectedReport;
+      const items = report.items || [];
+      const now = new Date();
+      const timestampStr = `${now.toLocaleDateString('ar-IQ')} ${now.toLocaleTimeString('ar-IQ', { hour: '2-digit', minute: '2-digit' })}`;
+
+      // حساب الإحصائيات
+      const total = items.length;
+      const localCount = items.filter(i => (i.journalCategory || '').includes('محلية')).length;
+      const intlCount = items.filter(i => (i.journalCategory || '').includes('عالمية')).length;
+      const predatoryItems = items.filter(i => {
+        const p = (typeof checkPredatoryStatus === 'function') ? checkPredatoryStatus(i.journal) : null;
+        return p && p.isPredatory;
+      });
+      const predatoryCount = predatoryItems.length;
+
+      // بناء صفوف الجدول
+      const rowsHtml = items.map((item, idx) => {
+        const isLocal = (item.journalCategory || '').includes('محلية');
+        const isIntl = (item.journalCategory || '').includes('عالمية');
+        const hasIasjLink = item.link && (item.link.includes('iasj.mohesr.gov.iq') || item.link.includes('iasj.net'));
+        const iasjMatch = (typeof findIasjJournal === 'function') ? findIasjJournal(item.journal) : null;
+        const predatoryCheck = (typeof checkPredatoryStatus === 'function') ? checkPredatoryStatus(item.journal) : null;
+        const pubDate = formatPublishDate(item.publishDate);
+
+        let iasjText = '-';
+        let iasjBadgeStyle = 'color:#64748b;background:#f1f5f9;';
+        if (isIntl && !hasIasjLink) {
+          iasjText = 'مجلة عالمية';
+          iasjBadgeStyle = 'color:#0284c7;background:#f0f9ff;';
+        } else if (iasjMatch) {
+          iasjText = `معتمدة في IASJ (#${iasjMatch.journal.id})`;
+          iasjBadgeStyle = 'color:#065f46;background:#ecfdf5;font-weight:bold;';
+        } else if (isLocal || hasIasjLink) {
+          iasjText = 'مجلة محلية (فهرس الوزارة)';
+          iasjBadgeStyle = 'color:#92400e;background:#fffbeb;';
+        }
+
+        let predatoryText = 'غير مدرجة بالقوائم';
+        let predatoryBadgeStyle = 'color:#065f46;background:#ecfdf5;';
+        if (predatoryCheck && predatoryCheck.isPredatory) {
+          predatoryText = `⚠️ مفترسة: ${predatoryCheck.sourceName || ''}`;
+          predatoryBadgeStyle = 'color:#991b1b;background:#fef2f2;font-weight:bold;';
+        } else if (!isIntl) {
+          predatoryText = 'نطاق المجلات المحلية';
+          predatoryBadgeStyle = 'color:#64748b;background:#f8fafc;';
+        }
+
+        let verdictText = 'منشور في مجلات عالمية';
+        let verdictBadgeStyle = 'color:#075985;background:#f0f9ff;font-weight:bold;';
+        if (predatoryCheck && predatoryCheck.isPredatory) {
+          verdictText = 'تحذير: مجلة غير رصينة';
+          verdictBadgeStyle = 'color:#991b1b;background:#fee2e2;font-weight:bold;';
+        } else if (iasjMatch || hasIasjLink) {
+          verdictText = 'مجلة موثوقة (IASJ)';
+          verdictBadgeStyle = 'color:#065f46;background:#ecfdf5;font-weight:bold;';
+        } else if (isLocal) {
+          verdictText = 'تدقيق محلي مطلوب';
+          verdictBadgeStyle = 'color:#92400e;background:#fef3c7;font-weight:bold;';
+        } else if ((item.journalCategory || '').includes('مؤتمر')) {
+          verdictText = 'وقائع مؤتمر';
+          verdictBadgeStyle = 'color:#475569;background:#f1f5f9;';
+        }
+
+        return `
+          <tr style="page-break-inside:avoid;break-inside:avoid;${idx % 2 === 0 ? 'background:#ffffff;' : 'background:#f8fafc;'}">
+            <td style="border:1px solid #cbd5e1;padding:6px 4px;text-align:center;font-weight:bold;font-family:monospace;font-size:11px;">${item.seq || (idx + 1)}</td>
+            <td style="border:1px solid #cbd5e1;padding:6px 8px;vertical-align:top;">
+              <div style="font-weight:800;color:#0f172a;font-size:11.5px;line-height:1.4;margin-bottom:3px;">${escapeHtml(item.title)}</div>
+              <div style="font-size:10.5px;color:#475569;">
+                <span style="font-weight:700;color:#0369a1;">${escapeHtml(item.authorName)}</span> • تسلسل: ${escapeHtml(item.authorOrder || '1')} • تاريخ: <span style="font-family:monospace;font-weight:bold;">${escapeHtml(pubDate)}</span>
+              </div>
+            </td>
+            <td style="border:1px solid #cbd5e1;padding:6px 6px;vertical-align:top;font-size:11px;">
+              <div style="font-weight:700;color:#1e293b;">${escapeHtml(item.journal)}</div>
+              <div style="font-size:10px;color:#64748b;margin-top:2px;">
+                <span style="display:inline-block;padding:1px 6px;border-radius:4px;background:#e2e8f0;font-weight:600;">${escapeHtml(item.journalCategory || '-')}</span>
+                ${item.citeScore ? `<span style="display:inline-block;padding:1px 6px;border-radius:4px;background:#dbeafe;color:#1e40af;font-weight:700;font-family:monospace;margin-right:3px;">CS: ${escapeHtml(item.citeScore)}</span>` : ''}
+              </div>
+            </td>
+            <td style="border:1px solid #cbd5e1;padding:6px 4px;text-align:center;vertical-align:middle;font-size:10.5px;">
+              <span style="display:inline-block;padding:2px 6px;border-radius:6px;${iasjBadgeStyle}">${escapeHtml(iasjText)}</span>
+            </td>
+            <td style="border:1px solid #cbd5e1;padding:6px 4px;text-align:center;vertical-align:middle;font-size:10.5px;">
+              <span style="display:inline-block;padding:2px 6px;border-radius:6px;${predatoryBadgeStyle}">${escapeHtml(predatoryText)}</span>
+            </td>
+            <td style="border:1px solid #cbd5e1;padding:6px 4px;text-align:center;vertical-align:middle;font-size:10.5px;">
+              <span style="display:inline-block;padding:3px 8px;border-radius:6px;${verdictBadgeStyle}">${escapeHtml(verdictText)}</span>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      // بناء قسم تواقيع اللجنة
+      const members = appState.committeeMembers || [];
+      let signaturesHtml = '';
+      if (members.length > 0) {
+        const colW = Math.floor(100 / members.length);
+        signaturesHtml = `
+          <table style="width:100%;border-collapse:collapse;text-align:center;margin-top:24px;page-break-inside:avoid;break-inside:avoid;">
+            <tr>
+              ${members.map(m => `
+                <td style="width:${colW}%;padding:6px;vertical-align:top;">
+                  <div style="font-size:12px;font-weight:800;color:#0f172a;margin-bottom:4px;">${escapeHtml(m.role)}</div>
+                  <div style="font-size:11.5px;font-weight:700;color:#0369a1;margin-bottom:20px;">${escapeHtml(m.name)}</div>
+                  <div style="font-size:10.5px;color:#475569;">التوقيع: ...........................</div>
+                </td>
+              `).join('')}
+            </tr>
+          </table>
+        `;
+      } else {
+        signaturesHtml = `
+          <table style="width:100%;border-collapse:collapse;text-align:center;margin-top:24px;page-break-inside:avoid;break-inside:avoid;">
+            <tr>
+              <td style="width:50%;padding:6px;vertical-align:top;">
+                <div style="font-size:12px;font-weight:800;color:#0f172a;margin-bottom:4px;">رئيس لجنة تدقيق الرصانة</div>
+                <div style="font-size:11.5px;color:#0369a1;margin-bottom:20px;">.................................</div>
+                <div style="font-size:10.5px;color:#475569;">التوقيع: ...........................</div>
+              </td>
+              <td style="width:50%;padding:6px;vertical-align:top;">
+                <div style="font-size:12px;font-weight:800;color:#0f172a;margin-bottom:4px;">عضو لجنة تدقيق الرصانة</div>
+                <div style="font-size:11.5px;color:#0369a1;margin-bottom:20px;">.................................</div>
+                <div style="font-size:10.5px;color:#475569;">التوقيع: ...........................</div>
+              </td>
+            </tr>
+          </table>
+        `;
+      }
+
+      // تجهيز مستند الطباعة الكامل
+      const printWindowHtml = `<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>تقرير فحص وتدقيق الرصانة - ${escapeHtml(report.reportId)}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Cairo', 'Segoe UI', Tahoma, Arial, sans-serif;
+      direction: rtl;
+      background: #f1f5f9;
+      color: #0f172a;
+      padding: 0;
+      margin: 0;
+    }
+    .toolbar {
+      background: linear-gradient(135deg, #065f46, #047857);
+      color: white;
+      text-align: center;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      font-family: 'Cairo', Arial;
+    }
+    .toolbar span { font-size: 13px; font-weight: 600; opacity: 0.95; }
+    .toolbar button {
+      background: white;
+      color: #065f46;
+      border: none;
+      padding: 7px 22px;
+      border-radius: 8px;
+      font-family: 'Cairo', Arial;
+      font-weight: 800;
+      font-size: 13px;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: all 0.2s;
+    }
+    .toolbar button:hover {
+      background: #f0fdf4;
+      transform: translateY(-1px);
+    }
+    .page-container {
+      max-width: 1100px;
+      margin: 20px auto;
+      background: white;
+      padding: 24px 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    }
+    .header-table {
+      width: 100%;
+      border-collapse: collapse;
+      border-bottom: 2px solid #059669;
+      padding-bottom: 12px;
+      margin-bottom: 14px;
+    }
+    .stat-badge {
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      text-align: center;
+      min-width: 110px;
+    }
+    .stat-badge .num {
+      font-size: 16px;
+      font-weight: 800;
+      font-family: monospace;
+    }
+    .stat-badge .lbl {
+      font-size: 10px;
+      color: #64748b;
+      font-weight: 700;
+    }
+    table.data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 11px;
+    }
+    table.data-table th {
+      background: #0f172a;
+      color: white;
+      border: 1px solid #334155;
+      padding: 7px 6px;
+      font-weight: 800;
+      font-size: 11px;
+    }
+    @media print {
+      body { background: white !important; }
+      .toolbar { display: none !important; }
+      .page-container {
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+      }
+      @page {
+        size: A4 landscape;
+        margin: 10mm 10mm 10mm 10mm;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <span>🖨️ يمكنك حفظ التقرير كملف PDF باختيار (حفظ بتنسيق PDF / Save as PDF) في نافذة الطباعة</span>
+    <button onclick="window.print()">طباعة / حفظ كـ PDF</button>
+    <button onclick="window.close()" style="background:transparent;color:white;border:1px solid rgba(255,255,255,0.4);padding:6px 14px;">إغلاق</button>
+  </div>
+
+  <div class="page-container">
+    <!-- الترويسة الرسمية -->
+    <table class="header-table">
+      <tr>
+        <td style="width:33%;vertical-align:middle;text-align:right;">
+          <div style="font-size:13px;font-weight:800;color:#0f172a;">جامعة الكوفة</div>
+          <div style="font-size:12px;font-weight:700;color:#059669;">كلية التخطيط العمراني</div>
+          <div style="font-size:11px;color:#475569;">لجنة تدقيق الرصانة العلمية</div>
+        </td>
+        <td style="width:34%;text-align:center;vertical-align:middle;">
+          <h1 style="font-size:16px;font-weight:900;color:#0f172a;margin-bottom:3px;">تقرير فحص وتدقيق الرصانة الأكاديمية</h1>
+          <div style="font-size:11.5px;color:#059669;font-weight:700;">مطابقة المجلات مع بوابة IASJ وقوائم المجلات المفترسة المعتمدة</div>
+        </td>
+        <td style="width:33%;vertical-align:middle;text-align:left;">
+          <div style="font-size:11px;color:#64748b;">رقم المحضر: <strong style="color:#0369a1;font-family:monospace;font-size:12px;">${escapeHtml(report.reportId)}</strong></div>
+          <div style="font-size:11px;color:#64748b;">القسم: <strong style="color:#0f172a;">${escapeHtml(report.department || '-')}</strong></div>
+          <div style="font-size:10px;color:#94a3b8;margin-top:2px;">تاريخ الفحص: ${escapeHtml(timestampStr)}</div>
+        </td>
+      </tr>
+    </table>
+
+    <!-- بطاقات الإحصاءات السريعة -->
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;">
+      <div class="stat-badge" style="background:#f8fafc;">
+        <div class="num" style="color:#0f172a;">${total}</div>
+        <div class="lbl">إجمالي البحوث</div>
+      </div>
+      <div class="stat-badge" style="background:#ecfdf5;border-color:#a7f3d0;">
+        <div class="num" style="color:#065f46;">${localCount}</div>
+        <div class="lbl">مجلات محلية (IASJ)</div>
+      </div>
+      <div class="stat-badge" style="background:#f0f9ff;border-color:#bae6fd;">
+        <div class="num" style="color:#0369a1;">${intlCount}</div>
+        <div class="lbl">مجلات عالمية</div>
+      </div>
+      <div class="stat-badge" style="background:${predatoryCount > 0 ? '#fef2f2' : '#f8fafc'};border-color:${predatoryCount > 0 ? '#fca5a5' : '#cbd5e1'};">
+        <div class="num" style="color:${predatoryCount > 0 ? '#dc2626' : '#16a34a'};">${predatoryCount}</div>
+        <div class="lbl">مجلات مفترسة</div>
+      </div>
+    </div>
+
+    <!-- جدول نتائج الفحص والتدقيق -->
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th style="width:4%;">ت</th>
+          <th style="width:34%;">عنوان البحث والباحث</th>
+          <th style="width:20%;">اسم المجلة والصنف</th>
+          <th style="width:14%;">بوابة IASJ</th>
+          <th style="width:14%;">القوائم المفترسة</th>
+          <th style="width:14%;">نتيجة التدقيق</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rowsHtml}
+      </tbody>
+    </table>
+
+    <!-- قسم تواقيع اللجنة -->
+    ${signaturesHtml}
+
+    <!-- التذييل التوثيقي -->
+    <div style="margin-top:20px;padding-top:8px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;font-size:9.5px;color:#94a3b8;">
+      <span>تم توليد هذا التقرير إلكترونياً من منظومة تدقيق رصانة البحوث العلمية — كلية التخطيط العمراني / جامعة الكوفة</span>
+      <span>رقم المحضر: ${escapeHtml(report.reportId)}</span>
+    </div>
+  </div>
+</body>
+</html>`;
+
+      // فتح نافذة الطباعة
+      const printWindow = window.open('', '_blank', 'width=1150,height=800');
+      if (!printWindow) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'النوافذ المنبثقة محظورة',
+          text: 'يرجى السماح بالنوافذ المنبثقة (Popups) في المتصفح لفتح تقرير الطباعة.',
+          confirmButtonText: 'حسناً',
+          confirmButtonColor: '#0f172a'
+        });
+        return;
+      }
+
+      printWindow.document.open();
+      printWindow.document.write(printWindowHtml);
+      printWindow.document.close();
+      if (printWindow.focus) printWindow.focus();
+
+      // تشغيل الطباعة التلقائية فور اكتمال تحميل الخطوط والمستند
+      setTimeout(() => {
+        try {
+          if (printWindow.document && printWindow.document.fonts && printWindow.document.fonts.ready) {
+            printWindow.document.fonts.ready.then(() => {
+              setTimeout(() => { if (printWindow.print) printWindow.print(); }, 400);
+            });
+          } else {
+            if (printWindow.print) printWindow.print();
+          }
+        } catch (e) {
+          if (printWindow.print) printWindow.print();
+        }
+      }, 600);
     }
 
     // 6. نافذة الإعدادات
@@ -2480,6 +2897,39 @@
     }
 
     // دالة مساعدة لمنع XSS
+    
+    // دالة تنسيق تاريخ النشر من أي صيغة (ISO مع توقيت، أو YYYY-MM) إلى YYYY-MM منضبط
+    function formatPublishDate(raw) {
+      if (!raw) return '-';
+      const str = String(raw).trim();
+      if (!str || str === 'null' || str === 'undefined') return '-';
+
+      // معالجة تواريخ ISO أو المحتوية على توقيت (مثل 2025-11-30T21:00:00.000Z)
+      if (str.includes('T') || str.includes('Z') || str.includes('GMT') || str.includes(':')) {
+        const d = new Date(str);
+        if (!isNaN(d.getTime())) {
+          // مراعاة فارق التوقيت (UTC vs GMT+3) إذا كانت الساعة ليلاً للتقريب للشهر الفعلي الصحيح
+          const adj = new Date(d.getTime() + (d.getUTCHours() >= 18 ? 6 * 3600 * 1000 : 0));
+          const y = adj.getFullYear();
+          const m = String(adj.getMonth() + 1).padStart(2, '0');
+          return `${y}-${m}`;
+        }
+      }
+
+      // إذا كانت الصيغة YYYY-MM
+      if (/^\d{4}-\d{2}$/.test(str)) {
+        return str;
+      }
+
+      // إذا كانت الصيغة YYYY-MM-DD
+      if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+        return str.substring(0, 7);
+      }
+
+      // تنظيف أي توقيت زائد كخيار احتياطي
+      return str.replace(/T.*$/, '').trim();
+    }
+
     function escapeHtml(text) {
       if (!text) return '';
       return String(text)
