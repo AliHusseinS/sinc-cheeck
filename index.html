@@ -1496,7 +1496,6 @@
           fetch(appState.scriptUrl, {
             method: 'POST',
             mode: 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
           }).catch(e => console.warn("GAS sync:", e));
         } catch (e) {
@@ -1644,7 +1643,6 @@
         try {
           const res = await fetch(appState.scriptUrl, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               action: "get_records",
               password: appState.systemPassword
@@ -1911,7 +1909,6 @@
 
           const res = await fetch(appState.scriptUrl, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ action: "get_records", password: appState.systemPassword })
           });
           const data = await res.json();
@@ -1947,7 +1944,6 @@
 
           const res = await fetch(appState.scriptUrl, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ action: "get_records", password: appState.systemPassword })
           });
           const data = await res.json();
@@ -2333,7 +2329,6 @@
       try {
         const res = await fetch(appState.scriptUrl, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'get_catalog_updates' })
         });
         const data = await res.json();
@@ -2415,7 +2410,6 @@
         // أولاً: اطلب من Apps Script إعادة المزامنة الفورية من المواقع
         const syncRes = await fetch(appState.scriptUrl, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'sync_catalogs_now' })
         });
         const syncData = await syncRes.json();
