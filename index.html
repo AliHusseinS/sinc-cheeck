@@ -114,10 +114,7 @@
       <!-- العناوين الرسمية للمنظومة -->
       <h2 class="text-xs sm:text-sm font-semibold text-slate-300 mb-1">جامعة الكوفة — كلية التخطيط العمراني</h2>
       <h1 class="text-lg sm:text-xl font-extrabold text-white tracking-tight mb-2">منظومة تدقيق رصانة البحوث العلمية</h1>
-      <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-xs text-amber-300 font-semibold mb-6">
-        <i class="fa-solid fa-shield-halved text-[11px]"></i>
-        <span>لجنة تدقيق الرصانة العلمية | تقييم الأداء</span>
-      </div>
+      
 
       <!-- نموذج إدخال كلمة المرور (فقط بدون اسم مستخدم) -->
       <form onsubmit="event.preventDefault(); handleSystemLogin();" class="space-y-4 text-right">
@@ -153,13 +150,11 @@
                 id="btn-system-login"
                 class="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-sm shadow-lg shadow-emerald-900/40 transition active:scale-95 cursor-pointer">
           <i class="fa-solid fa-right-to-bracket text-base"></i>
-          <span>دخول إلى المنظومة</span>
+          <span>تسجيل الدخول</span>
         </button>
       </form>
 
-      <p class="text-[11px] text-slate-400 mt-6 leading-relaxed">
-        الوصول مقتصر على السادة أعضاء لجنة تدقيق الرصانة العلمية والمخولين فقط.
-      </p>
+      
     </div>
   </div>
 
@@ -3081,7 +3076,6 @@
     function handleSystemLogout() {
       Swal.fire({
         title: 'تسجيل الخروج',
-        text: 'هل أنت متأكد من رغبتك في تسجيل الخروج وقفل المنظومة؟',
         icon: 'question',
         showCancelButton: true,
         confirmButtonText: 'نعم، خروج',
