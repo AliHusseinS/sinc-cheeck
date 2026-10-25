@@ -61,7 +61,21 @@ function getCleanPredatoryVariants(text) {
     if (withoutThe) res.add(withoutThe);
   }
 
-  // إزالة الأقواس وما بداخلها (مثل الأسماء المختصرة أو أرقام المعرفات)
+  // استخراج ما بداخل الأقواس (مثل اسم دار النشر المكتوب بين قوسين أو الاسم المختصر)
+  const matches = text.match(/\(([^)]+)\)|\[([^\]]+)\]/g);
+  if (matches) {
+    for (const m of matches) {
+      const inside = m.replace(/[()[\]]/g, '').trim();
+      const insideNorm = normalizePredatoryText(inside);
+      if (insideNorm && insideNorm.length >= 4) {
+        res.add(insideNorm);
+        const insideNoThe = insideNorm.replace(/^the\s+/, '');
+        if (insideNoThe) res.add(insideNoThe);
+      }
+    }
+  }
+
+  // إزالة الأقواس وما بداخلها لفحص عنوان المجلة منفرداً
   const noParens = text.replace(/\s*\([^)]*\)/g, '').replace(/\s*\[[^\]]*\]/g, '');
   const noParensNorm = normalizePredatoryText(noParens);
   if (noParensNorm) {
@@ -70,12 +84,12 @@ function getCleanPredatoryVariants(text) {
     if (noThe) res.add(noThe);
   }
 
-  // تقسيم العناوين المركبة أو ثنائية اللغة المفصولة بـ / أو -
-  const parts = noParens.split(/[\/\-–—]/);
+  // تقسيم العناوين المركبة أو ثنائية اللغة أو المفصولة بـ / أو - أو : أو | أو ;
+  const parts = noParens.split(/[\/\-–—:|;]/);
   for (let p of parts) {
     p = p.replace(/,\s*[A-Z0-9]{2,}\s*$/, '').trim();
     const pNorm = normalizePredatoryText(p);
-    if (pNorm && pNorm.length >= 6) {
+    if (pNorm && pNorm.length >= 4) {
       res.add(pNorm);
       const pNoThe = pNorm.replace(/^the\s+/, '');
       if (pNoThe) res.add(pNoThe);
