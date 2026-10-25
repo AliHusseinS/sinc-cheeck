@@ -223,7 +223,7 @@
       </div>
 
       <div class="max-w-3xl mx-auto glass-card rounded-3xl p-6 sm:p-10 border border-slate-200/80">
-        <label class="block text-slate-700 font-bold mb-4 text-center text-lg">اختر أحد الأقسام  التالية:</label>
+        <label class="block text-slate-700 font-bold mb-4 text-center text-lg">اختر أحد الأقسام العلمية التالية:</label>
         
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           
@@ -533,7 +533,7 @@
           <div class="flex flex-wrap items-center gap-3">
             <button id="btn-export-pdf" onclick="handleExportAndSend()" class="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl bg-gradient-to-r from-primary-700 to-primary-900 hover:from-primary-800 hover:to-slate-900 text-white font-bold text-sm sm:text-base shadow-lg shadow-primary-700/30 hover:shadow-xl transition-all duration-200 active:scale-95">
               <i class="fa-solid fa-file-pdf text-rose-400 text-lg"></i>
-              <span>تصدير المحضر </span>
+              <span>تصدير المحضر وإرسال البيانات للتدقيق</span>
             </button>
           </div>
         </div>
@@ -558,7 +558,7 @@
         <div class="flex items-center gap-2.5 sm:gap-3">
           <button id="btn-sync-catalogs" onclick="manualSyncCatalogs()" title="تحديث قوائم المجلات المفترسة من السحابة (Google Apps Script)" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs sm:text-sm font-bold shadow-sm transition active:scale-95">
             <i class="fa-solid fa-rotate"></i>
-            <span>تحديث البيانات</span>
+            <span>تحديث القوائم السحابية</span>
           </button>
           <button id="btn-print-inspection-report" onclick="printInspectionReport()" class="hidden inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs sm:text-sm font-bold shadow-sm transition active:scale-95">
             <i class="fa-solid fa-print"></i>
@@ -833,7 +833,7 @@
       researchList: [],
       committeeMembers: [],
       currentReportId: "",
-      scriptUrl: localStorage.getItem('uok_script_url') || "https://script.google.com/macros/s/AKfycbzA6CJZqjbG3x_TTdkyxvRRdUmbqfWskfSmKjBDaueku73v_YXWGhhaA8FLvpTnu5mmew/exec",
+      scriptUrl: localStorage.getItem('uok_script_url') || "https://script.google.com/macros/s/AKfycbyHYfpfc0gfGTPFe4SlXhgCVy7v6i0kuLJucJFgkWA6-AxtfBEZ8-Jii623cfV9BQfzyw/exec",
       systemPassword: "1122334455",
       archiveData: []
     };
@@ -2830,19 +2830,21 @@
           body: JSON.stringify({ action: 'get_catalog_updates' })
         });
         const data = await res.json();
-        if (data && data.success && Array.isArray(data.entries) && data.entries.length > 0) {
+        const entries = (data && (data.entries || data.updates)) ? (data.entries || data.updates) : [];
+        if (data && data.success && Array.isArray(entries) && entries.length > 0) {
           // حفظ التحديثات في localStorage
-          localStorage.setItem('uok_custom_predatory', JSON.stringify(data.entries));
+          localStorage.setItem('uok_custom_predatory', JSON.stringify(entries));
           // تحديث المتغير العالمي المستخدم في checkPredatoryStatus
-          window.CUSTOM_PREDATORY_ENTRIES = data.entries;
+          window.CUSTOM_PREDATORY_ENTRIES = entries;
           if (!silent) {
+            const sheetsInfo = (data.scannedSheets && data.scannedSheets.length > 0) ? ` (${data.scannedSheets.join('، ')})` : '';
             Swal.fire({
               toast: true,
               position: 'top-start',
               icon: 'success',
-              title: `✅ تم تحميل ${data.entries.length} إدخال محدّث من القوائم السحابية`,
+              title: `✅ تم تحميل ${entries.length} إدخال محدّث من القوائم السحابية${sheetsInfo}`,
               showConfirmButton: false,
-              timer: 3000
+              timer: 3500
             });
             // إعادة فحص المحضر الحالي إن كان مفتوحاً
             if (currentInspectedReport) {
@@ -2854,7 +2856,7 @@
             toast: true,
             position: 'top-start',
             icon: 'info',
-            title: 'لا توجد تحديثات جديدة في القوائم السحابية حالياً',
+            title: data.message || 'لا توجد تحديثات جديدة في القوائم السحابية حالياً',
             showConfirmButton: false,
             timer: 2500
           });
@@ -2954,7 +2956,7 @@
         // استعادة زر المزامنة
         if (syncBtn) {
           syncBtn.disabled = false;
-          syncBtn.innerHTML = `<i class="fa-solid fa-rotate"></i><span>تحديث البيانات</span>`;
+          syncBtn.innerHTML = `<i class="fa-solid fa-rotate"></i><span>تحديث القوائم السحابية</span>`;
         }
       }
     }
