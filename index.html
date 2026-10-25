@@ -377,6 +377,13 @@
               </label>
               <input type="text" id="input-journal" list="iasj-journals-datalist" required placeholder="اسم المجلة العلمية أو المؤتمر (يدعم الإكمال التلقائي لمجلات IASJ)..." class="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
               <datalist id="iasj-journals-datalist"></datalist>
+              <div id="journal-predatory-alert" class="hidden mt-2 p-2.5 rounded-xl bg-rose-50 border border-rose-300 text-xs text-rose-800 flex items-start gap-2 shadow-sm transition-all">
+                <i class="fa-solid fa-triangle-exclamation text-rose-600 mt-0.5 text-sm shrink-0"></i>
+                <div class="flex-1">
+                  <span class="font-bold block text-rose-900">تنبيه رصانة: مجلة / دار نشر غير معتمدة!</span>
+                  <span id="journal-predatory-alert-text" class="text-[11px] text-rose-700 block mt-0.5"></span>
+                </div>
+              </div>
             </div>
 
             <!-- المدخل 4: صنف المجلة - List (1- مجلة محلية 2- مجلة عالمية 3- مؤتمر عالمي 4- مؤتمر محلي) -->
@@ -911,6 +918,19 @@
               }
             }
           }
+          // فحص مباشر وفوري للمجلات المفترسة ومجلات الوزارة (RDD)
+          const predAlert = document.getElementById("journal-predatory-alert");
+          const predText = document.getElementById("journal-predatory-alert-text");
+          if (predAlert && predText) {
+            const pred = (typeof checkPredatoryStatus === 'function') ? checkPredatoryStatus(val) : null;
+            if (pred && pred.isPredatory) {
+              predAlert.classList.remove("hidden");
+              predText.textContent = `المجلة مطابقة لـ "${pred.name}" المدرجة في (${pred.sourceName})`;
+            } else {
+              predAlert.classList.add("hidden");
+              predText.textContent = "";
+            }
+          }
         });
       }
     });
@@ -1038,6 +1058,8 @@
       document.getElementById("input-journal").value = "";
       document.getElementById("input-citescore").value = "";
       document.getElementById("input-link").value = "";
+      const predAlert = document.getElementById("journal-predatory-alert");
+      if (predAlert) predAlert.classList.add("hidden");
       updateNextSequence();
     }
 
@@ -1073,11 +1095,19 @@
         return;
       }
 
-      tbody.innerHTML = appState.researchList.map(item => `
+      tbody.innerHTML = appState.researchList.map(item => {
+        const pred = (typeof checkPredatoryStatus === 'function') ? checkPredatoryStatus(item.journal) : null;
+        const predBadge = (pred && pred.isPredatory)
+          ? `<div class="mt-1"><span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-300" title="${escapeHtml(pred.sourceName)}"><i class="fa-solid fa-triangle-exclamation text-rose-600"></i> ${escapeHtml(pred.sourceName)}</span></div>`
+          : '';
+        return `
         <tr class="hover:bg-slate-50 transition-colors">
           <td class="py-3 px-3 text-center font-bold text-slate-700 bg-slate-50/50">${item.seq}</td>
           <td class="py-3 px-3 font-semibold text-slate-900 leading-snug">${escapeHtml(item.title)}</td>
-          <td class="py-3 px-3 text-slate-700">${escapeHtml(item.journal)}</td>
+          <td class="py-3 px-3 text-slate-700">
+            ${escapeHtml(item.journal)}
+            ${predBadge}
+          </td>
           <td class="py-3 px-3">
             <span class="inline-block px-2 py-0.5 rounded text-xs font-semibold ${getCategoryBadgeStyle(item.journalCategory)}">
               ${escapeHtml(item.journalCategory)}
@@ -1102,8 +1132,8 @@
               <i class="fa-regular fa-trash-can"></i>
             </button>
           </td>
-        </tr>
-      `).join('');
+        </tr>`;
+      }).join('');
     }
 
     function getCategoryBadgeStyle(cat) {
@@ -2318,8 +2348,8 @@
                 <a href="https://www.predatoryjournals.org/the-list/journals" target="_blank" title="2. Predatory Journals (المجلات)" class="px-1 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-center">
                   PJ مجلات
                 </a>
-                <a href="https://jor.rdd.edu.iq/dis.php" target="_blank" title="3. المجلات المرفوضة في وزارة التعليم العالي (RDD)" class="px-1 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-center">
-                  RDD مجلات
+                <a href="https://www.google.com/search?q=${encodeURIComponent('site:jor.rdd.edu.iq "' + cleanJournalTitle + '"')}" target="_blank" title="3. بحث تلقائي عن المجلة في موقع وزارة التعليم العالي (RDD)" class="px-1 py-0.5 rounded bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-300 text-center">
+                  <i class="fa-solid fa-magnifying-glass text-[8px]"></i> RDD فحص
                 </a>
                 <a href="https://beallslist.net/" target="_blank" title="4. دور النشر في Beall's List" class="px-1 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-center">
                   Beall دور
