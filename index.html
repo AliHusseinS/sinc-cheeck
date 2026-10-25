@@ -833,7 +833,15 @@
       researchList: [],
       committeeMembers: [],
       currentReportId: "",
-      scriptUrl: localStorage.getItem('uok_script_url') || "https://script.google.com/macros/s/AKfycbyHYfpfc0gfGTPFe4SlXhgCVy7v6i0kuLJucJFgkWA6-AxtfBEZ8-Jii623cfV9BQfzyw/exec",
+      scriptUrl: (function() {
+        const stored = localStorage.getItem('uok_script_url');
+        const defaultUrl = "https://script.google.com/macros/s/AKfycbzNquO87v9CG0aVOTzwPH7Ep_ppX3h86grOVc-8kWmuPBGFdSiuPE2Z-MLCl65HH_ZI7g/exec";
+        if (!stored || stored.indexOf("AKfycbzNquO87v9CG0aVOTzwPH7Ep_ppX3h86grOVc-8kWmuPBGFdSiuPE2Z-MLCl65HH_ZI7g") !== -1) {
+          localStorage.setItem('uok_script_url', defaultUrl);
+          return defaultUrl;
+        }
+        return stored;
+      })(),
       systemPassword: "1122334455",
       archiveData: []
     };
