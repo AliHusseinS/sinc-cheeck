@@ -2826,45 +2826,131 @@
     // 7. منظومة التحديث السحابي للقوائم (المجلات المفترسة + IASJ)
     // =====================================================================
 
+    // ===== الملفان السحابيان لقوائم المجلات ودور النشر المفترسة 2025 =====
+    // يتم جلبهما مباشرة من Google Sheets بدون Apps Script، وهما قابلان للتحديث الفوري
+    const PREDATORY_SHEETS_SOURCES = [
+      {
+        id: '1Qa1lAlSbl7iiKddYINNsDB4wxI7uUA4IVseeLnCc5U4',
+        name: 'The Predatory Journals List 2025',
+        url: 'https://www.predatoryjournals.org/the-list/journals'
+      },
+      {
+        id: '1BHM4aJljhbOAzSpkX1kXDUEvy6vxREZu5WJaDH6M1Vk',
+        name: 'The Predatory Publishers List 2025',
+        url: 'https://www.predatoryjournals.org/the-list/publishers'
+      }
+    ];
+
     /**
-     * جلب التحديثات السحابية بصمت (في الخلفية عند تحميل الصفحة)
+     * جلب مجلات ودور نشر مباشرة من ملفَي Google Sheets العامَين (CSV export)
+     * يعمل بدون Apps Script وبدون أي صلاحيات خاصة
+     */
+    async function fetchFromGoogleSheets() {
+      const allEntries = [];
+      const seen = new Set();
+      const scanned = [];
+
+      for (const src of PREDATORY_SHEETS_SOURCES) {
+        try {
+          const csvUrl = `https://docs.google.com/spreadsheets/d/${src.id}/export?format=csv`;
+          const res = await fetch(csvUrl);
+          if (!res.ok) continue;
+          const text = await res.text();
+          const lines = text.split('\n');
+          scanned.push(src.name);
+
+          for (const line of lines) {
+            const parts = line.split(',');
+            // عمود 0 قد يكون رقماً تسلسلياً، وعمود 1 هو اسم المجلة/دار النشر
+            let rawName = (parts[1] || parts[0] || '').trim().replace(/^"|"$/g, '').trim();
+            if (/^\d+$/.test(rawName) && parts.length > 1) {
+              rawName = (parts[1] || '').trim().replace(/^"|"$/g, '').trim();
+            }
+            if (rawName.length >= 3 && !/^\d+$/.test(rawName)) {
+              const key = rawName.toLowerCase();
+              if (!seen.has(key)) {
+                seen.add(key);
+                allEntries.push({
+                  name: rawName,
+                  sourceName: src.name,
+                  url: src.url,
+                  notes: 'محدث تلقائياً من Google Sheets'
+                });
+              }
+            }
+          }
+        } catch (e) {
+          console.warn('fetchFromGoogleSheets: failed for', src.name, e.message);
+        }
+      }
+
+      return { entries: allEntries, scanned };
+    }
+
+    /**
+     * جلب التحديثات السحابية من مصدرين:
+     * 1) مباشرة من ملفَي Google Sheets (الأولوية القصوى - ديناميكي تلقائي)
+     * 2) Apps Script (مصدر احتياطي للبيانات الإضافية)
      * @param {boolean} silent - true = لا يُظهر رسائل للمستخدم
      */
     async function fetchCatalogUpdates(silent = true) {
-      if (!appState.scriptUrl) return;
       try {
-        const res = await fetch(appState.scriptUrl, {
-          method: 'POST',
-          body: JSON.stringify({ action: 'get_catalog_updates' })
-        });
-        const data = await res.json();
-        const entries = (data && (data.entries || data.updates)) ? (data.entries || data.updates) : [];
-        if (data && data.success && Array.isArray(entries) && entries.length > 0) {
-          // حفظ التحديثات في localStorage
-          localStorage.setItem('uok_custom_predatory', JSON.stringify(entries));
+        // 1. جلب مباشر من Google Sheets (مصدر ديناميكي دائم)
+        const sheetsResult = await fetchFromGoogleSheets();
+        let allEntries = sheetsResult.entries;
+        const scannedSheets = sheetsResult.scanned;
+
+        // 2. إن كان رابط Apps Script متاحاً، نجلب منه أيضاً ونضيف ما لم يُجلب بعد
+        if (appState.scriptUrl) {
+          try {
+            const res = await fetch(appState.scriptUrl, {
+              method: 'POST',
+              body: JSON.stringify({ action: 'get_catalog_updates' })
+            });
+            const data = await res.json();
+            const appsEntries = (data && (data.entries || data.updates)) ? (data.entries || data.updates) : [];
+            const existingKeys = new Set(allEntries.map(e => (e.name || '').toLowerCase()));
+            for (const e of appsEntries) {
+              const k = (e.name || '').toLowerCase();
+              if (k.length >= 3 && !existingKeys.has(k)) {
+                existingKeys.add(k);
+                allEntries.push(e);
+              }
+            }
+            if (data && data.scannedSheets) {
+              scannedSheets.push(...data.scannedSheets.filter(s => !scannedSheets.includes(s)));
+            }
+          } catch (appsErr) {
+            console.warn('Apps Script fetch failed (non-critical):', appsErr.message);
+          }
+        }
+
+        if (allEntries.length > 0) {
+          // حفظ التحديثات في localStorage للاستخدام offline
+          localStorage.setItem('uok_custom_predatory', JSON.stringify(allEntries));
           // تحديث المتغير العالمي المستخدم في checkPredatoryStatus
-          window.CUSTOM_PREDATORY_ENTRIES = entries;
+          window.CUSTOM_PREDATORY_ENTRIES = allEntries;
+
           if (!silent) {
-            const sheetsInfo = (data.scannedSheets && data.scannedSheets.length > 0) ? ` (${data.scannedSheets.join('، ')})` : '';
+            const sheetsInfo = scannedSheets.length > 0 ? ` من: ${scannedSheets.join('، ')}` : '';
             Swal.fire({
               toast: true,
               position: 'top-start',
               icon: 'success',
-              title: `✅ تم تحميل ${entries.length} إدخال محدّث من القوائم السحابية${sheetsInfo}`,
+              title: `✅ تم تحميل ${allEntries.length} إدخال محدّث${sheetsInfo}`,
               showConfirmButton: false,
               timer: 3500
             });
-            // إعادة فحص المحضر الحالي إن كان مفتوحاً
             if (currentInspectedReport) {
               renderInspectionResults(currentInspectedReport);
             }
           }
-        } else if (!silent && data && !data.success) {
+        } else if (!silent) {
           Swal.fire({
             toast: true,
             position: 'top-start',
             icon: 'info',
-            title: data.message || 'لا توجد تحديثات جديدة في القوائم السحابية حالياً',
+            title: 'لا توجد تحديثات جديدة حالياً',
             showConfirmButton: false,
             timer: 2500
           });
@@ -2875,7 +2961,7 @@
             toast: true,
             position: 'top-start',
             icon: 'error',
-            title: 'تعذّر الاتصال بـ Google Apps Script للمزامنة',
+            title: 'تعذّر جلب التحديثات السحابية',
             showConfirmButton: false,
             timer: 3000
           });
