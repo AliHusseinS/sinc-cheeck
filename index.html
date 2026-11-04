@@ -2142,9 +2142,26 @@
       `;
     }
 
-    // ===== دالة بناء نافذة الطباعة/PDF بمحرك المتصفح الأصلي (يدعم العربية وتوزيع الصفحات بشكل مثالي) =====
+        // ===== دالة بناء نافذة الطباعة/PDF بمحرك المتصفح الأصلي (يدعم العربية وتوزيع الصفحات بشكل مثالي) =====
     function openPdfPrintWindow(generatedId) {
-      const dept = appState.selectedDepartment;
+      let targetItems = appState.researchList;
+      let targetDept = appState.selectedDepartment;
+
+      if (generatedId && generatedId !== 'جديد') {
+        const allRecords = (typeof getCombinedReportsList === 'function') ? getCombinedReportsList() : [];
+        const found = allRecords.find(r => String(r.reportId).trim() === String(generatedId).trim());
+        if (found && found.items && found.items.length > 0) {
+          if (!targetItems || targetItems.length === 0 || generatedId !== appState.currentReportId) {
+            targetItems = found.items;
+            targetDept = found.department || targetDept;
+          }
+        }
+      }
+
+      if (!targetItems || targetItems.length === 0) {
+        targetItems = appState.researchList || [];
+      }
+      const dept = targetDept || appState.selectedDepartment;
 
       // بناء قسم أعضاء اللجنة
       const members = appState.committeeMembers;
@@ -2549,7 +2566,14 @@
 
     // تنزيل ملف PDF الحالي — يفتح نافذة الطباعة بمحرك المتصفح الأصلي
     function downloadCurrentPDF() {
-      if (appState.researchList.length === 0) {
+      const currentId = appState.currentReportId || document.getElementById("modal-report-id")?.textContent?.trim() || 'جديد';
+      if (!appState.researchList || appState.researchList.length === 0) {
+        const allRecords = (typeof getCombinedReportsList === 'function') ? getCombinedReportsList() : [];
+        const found = allRecords.find(r => String(r.reportId).trim() === String(currentId).trim());
+        if (found && found.items && found.items.length > 0) {
+          openPdfPrintWindow(currentId);
+          return;
+        }
         Swal.fire({
           icon: 'warning',
           title: 'لا توجد بيانات للتحميل',
@@ -2558,7 +2582,7 @@
         });
         return;
       }
-      openPdfPrintWindow(appState.currentReportId || 'جديد');
+      openPdfPrintWindow(currentId);
     }
 
 
