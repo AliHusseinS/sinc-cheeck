@@ -406,7 +406,7 @@
             <div class="md:col-span-2">
               <label class="block text-xs font-bold text-slate-600 mb-1.5 flex items-center justify-between">
                 <span>اسم المجلة / جهة النشر <span class="text-rose-500">*</span></span>
-                <span id="journal-mode-indicator" class="text-[11px] text-slate-400 font-normal">كتابة حرة</span>
+                <span id="journal-mode-indicator" class="text-[11px] text-slate-400 font-normal"></span>
               </label>
 
               <!-- مربع الكتابة الحر للمجلات العالمية والعربية والمؤتمرات -->
@@ -1868,7 +1868,7 @@
           selectElem.removeAttribute("required");
         }
         if (modeIndicator) {
-          modeIndicator.innerHTML = '<span class="text-slate-400">كتابة حرة</span>';
+          modeIndicator.innerHTML = '<span class="text-slate-400"></span>';
         }
         if (textInput && textInput.value) {
           const pred = (typeof checkPredatoryStatus === 'function') ? checkPredatoryStatus(textInput.value.trim()) : null;
