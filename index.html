@@ -323,7 +323,7 @@
               <span id="banner-editing-dept" class="text-xs bg-amber-200 text-amber-900 px-2.5 py-0.5 rounded-full font-bold"></span>
             </div>
             <p class="text-xs text-amber-800 mt-1">
-              أنت الآن تعدل هذا المحضر المصدّر. يمكنك تعديل بيانات أي بحث، حذفه، أو إضافة بحوث جديدة، ثم الضغط على <strong>"تحديث وتصدير المحضر"</strong> في الأسفل لإعادة تصديره 
+              أنت الآن تعدل هذا المحضر المصدّر. يمكنك تعديل بيانات أي بحث، حذفه، أو إضافة بحوث جديدة، ثم الضغط على <strong>"تحديث وتصدير المحضر"</strong> في الأسفل لإعادة تصديره وإرسال البيانات للتدقيق دون الحاجة لإعادة إدخاله من جديد.
             </p>
           </div>
         </div>
@@ -342,7 +342,7 @@
             <div class="w-9 h-9 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
               <i class="fa-solid fa-plus text-base"></i>
             </div>
-            <h3 class="text-lg font-bold text-slate-800">إدخال بيانات البحث </h3>
+            <h3 class="text-lg font-bold text-slate-800">إدخال بيانات البحث العلمي</h3>
           </div>
         </div>
 
@@ -352,7 +352,7 @@
             <!-- المدخل 1: ت (التسلسل) - تلقائي -->
             <div>
               <label class="block text-xs font-bold text-slate-600 mb-1.5">
-                No.
+                ت (التسلسل التلقائي)
               </label>
               <div class="relative">
                 <input type="text" id="input-seq" readonly value="1" class="w-full bg-slate-100 border border-slate-300 rounded-xl px-3.5 py-2.5 text-center font-bold text-slate-700 focus:outline-none cursor-not-allowed">
@@ -399,14 +399,14 @@
               <label class="block text-xs font-bold text-slate-600 mb-1.5">
                 عنوان البحث <span class="text-rose-500">*</span>
               </label>
-              <input type="text" id="input-title" required placeholder="أدخل عنوان  البحث " class="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
+              <input type="text" id="input-title" required placeholder="أدخل العنوان الكامل للبحث العلمي..." class="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-800 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition">
             </div>
 
             <!-- المدخل 3: اسم المجلة -->
             <div class="md:col-span-2">
               <label class="block text-xs font-bold text-slate-600 mb-1.5 flex items-center justify-between">
                 <span>اسم المجلة / جهة النشر <span class="text-rose-500">*</span></span>
-                <span id="journal-mode-indicator" class="text-[11px] text-slate-400 font-normal"></span>
+                <span id="journal-mode-indicator" class="text-[11px] text-slate-400 font-normal">كتابة حرة</span>
               </label>
 
               <!-- مربع الكتابة الحر للمجلات العالمية والعربية والمؤتمرات -->
@@ -424,9 +424,9 @@
                 </select>
                 <div class="flex items-center justify-between text-[11px] px-1 text-slate-500">
                   <span class="text-emerald-700 font-semibold flex items-center gap-1">
-                    <i class="fa-solid fa-circle-check"></i> المجلات المعتمدة من قبل وزارة التعليم العالي 
+                    <i class="fa-solid fa-circle-check"></i> قائمة حصرية بمجلات وزارة التعليم العالي (IASJ)
                   </span>
-                  <span class="text-slate-400"></span>
+                  <span class="text-slate-400">الاختيار إلزامي من القائمة فقط</span>
                 </div>
               </div>
 
@@ -512,6 +512,7 @@
           </div>
 
           <div class="text-xs text-slate-500">
+            يمكنك إضافة أكثر من  بحث، وسيتم التحديث التلقائي .
           </div>
         </div>
 
@@ -531,7 +532,7 @@
                 <th class="py-3 px-3 border-b border-slate-800 text-center min-w-[100px]">تاريخ النشر</th>
                 <th class="py-3 px-3 border-b border-slate-800 text-center min-w-[140px]">Scopus coverage</th>
                 <th class="py-3 px-3 border-b border-slate-800 text-center min-w-[90px]">الرابط</th>
-                <th class="py-3 px-3 border-b border-slate-800 text-center w-16">تعديل</th>
+                <th class="py-3 px-3 border-b border-slate-800 text-center w-16">إجراء</th>
               </tr>
             </thead>
             <tbody id="research-table-body" class="divide-y divide-slate-200">
@@ -795,7 +796,7 @@
               <span>المحاضر</span>
               <span id="reports-count-badge" class="text-xs bg-sky-100 text-sky-800 font-extrabold px-2.5 py-0.5 rounded-full">0 محضر</span>
             </h3>
-            <p class="text-xs text-slate-500"></p>
+            <p class="text-xs text-slate-500">استعراض وتعديل وإعادة تصدير المحاضر السابقة دون الحاجة لإعادة إدخال البيانات من جديد</p>
           </div>
         </div>
         <button onclick="closeReportsModal()" class="text-slate-400 hover:text-slate-600 p-2 rounded-xl hover:bg-slate-100 transition">
@@ -814,13 +815,13 @@
             <option value="ALL">جميع الأقسام</option>
             <option value="قسم التخطيط الحضري">قسم التخطيط الحضري</option>
             <option value="قسم التخطيط البيئي">قسم التخطيط البيئي</option>
-            <option value="قسم التخطيط الاقليمي">قسم التخطيط الاقليمي</option>
+            <option value="قسم النظم الإقليمية">قسم النظم الإقليمية</option>
           </select>
         </div>
         <div class="flex items-center gap-2">
           <button onclick="syncAndRefreshReportsModal()" class="px-3.5 py-2 rounded-xl bg-white hover:bg-sky-50 border border-slate-200 text-xs font-bold text-sky-700 shadow-sm transition active:scale-95 flex items-center gap-1.5">
             <i class="fa-solid fa-arrows-rotate text-xs"></i>
-            <span>تحديث</span>
+            <span>تحديث السجلات</span>
           </button>
         </div>
       </div>
@@ -1699,7 +1700,7 @@
     async function queryElsevierApi(q) {
       try {
         const apiKey = appState.scopusApiKey || SCOPUS_API_KEY;
-        const url = "https://api.elsevier.com/content/serial/title?title=" + encodeURIComponent(q) + "&apiKey=" + apiKey + "&httpAccept=application/json";
+        const url = "https://api.elsevier.com/content/serial/title?title=" + encodeURIComponent(q) + "&apiKey=" + apiKey + "&httpAccept=application/json&view=CITESCORE";
         const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
         if (!res.ok) return [];
         const data = await res.json();
@@ -1714,7 +1715,7 @@
       if (journalCategory && journalCategory !== "مجلة عالمية") {
         return {
           status: journalCategory,
-          years: "",
+          years: "غير مشمولة بالفحص",
           isCovered: false,
           notApplicable: true
         };
@@ -1779,23 +1780,56 @@
         const startYear = matched.coverageStartYear || '';
         const endYear = matched.coverageEndYear || '';
         const currentYear = new Date().getFullYear();
-
         const endYearNum = parseInt(endYear, 10);
-        const isCovered = (!isNaN(endYearNum) && endYearNum >= (currentYear - 1));
 
+        // فحص حالة الاستبعاد والتوقف (coverage discontinued in Scopus)
+        // عند إيقاف مجلة واستبعادها من سكوباس يتوقف تتبع الاستشهادات الجارية (tracker === null ولا توجد حالة In-Progress)
+        const tracker = matched.citeScoreYearInfoList?.citeScoreTracker;
+        const yearsInfo = matched.citeScoreYearInfoList?.citeScoreYearInfo || [];
+        const hasInProgress = Array.isArray(yearsInfo) && yearsInfo.some(y => y['@status'] === 'In-Progress');
+
+        let isDiscontinued = false;
+        if (!isNaN(endYearNum)) {
+          if (endYearNum < (currentYear - 1)) {
+            // سنة التغطية انتهت في الماضي
+            isDiscontinued = true;
+          } else if (tracker === null && !hasInProgress) {
+            // التغطية تنتهي في السنة الحالية أو الماضية لكن المجلة مستبعدة ومتوقفة رسمياً (coverage discontinued)
+            isDiscontinued = true;
+          }
+        }
+
+        const isCovered = (!isNaN(endYearNum) && !isDiscontinued);
+
+        let statusText = "";
         let yearsText = "";
-        if (startYear && endYear) {
-          yearsText = "من " + startYear + " إلى " + endYear;
-        } else if (startYear) {
-          yearsText = "من " + startYear + " حتى الآن";
+
+        if (isDiscontinued) {
+          statusText = "خارج تصنيف سكوباس";
+          if (startYear && endYear) {
+            yearsText = "تغطية متوقفة (" + startYear + " - " + endYear + ")";
+          } else {
+            yearsText = "تغطية متوقفة (Discontinued)";
+          }
+        } else if (isCovered) {
+          statusText = "ضمن تصنيف سكوباس";
+          if (startYear && endYear) {
+            yearsText = "من " + startYear + " إلى " + endYear;
+          } else if (startYear) {
+            yearsText = "من " + startYear + " حتى الآن";
+          } else {
+            yearsText = "تغطية سارية";
+          }
         } else {
-          yearsText = isCovered ? "تغطية سارية" : "غير مفهرسة";
+          statusText = "خارج تصنيف سكوباس";
+          yearsText = "غير مفهرسة";
         }
 
         const result = {
-          status: isCovered ? "ضمن تصنيف سكوباس" : "خارج تصنيف سكوباس",
+          status: statusText,
           years: yearsText,
           isCovered: isCovered,
+          isDiscontinued: isDiscontinued,
           notApplicable: false,
           sourceTitle: matched['dc:title'],
           sourceId: matched['source-id']
@@ -1850,7 +1884,7 @@
           }
         }
         if (modeIndicator) {
-          modeIndicator.innerHTML = '<span class="text-emerald-700 font-bold"><i class="fa-solid fa-lock text-[9px] ml-0.5"></i>J</span>';
+          modeIndicator.innerHTML = '<span class="text-emerald-700 font-bold"><i class="fa-solid fa-lock text-[9px] ml-0.5"></i> اختيار إلزامي من قائمة IASJ</span>';
         }
         if (predAlert) predAlert.classList.add("hidden");
       } else {
@@ -1868,7 +1902,7 @@
           selectElem.removeAttribute("required");
         }
         if (modeIndicator) {
-          modeIndicator.innerHTML = '<span class="text-slate-400"></span>';
+          modeIndicator.innerHTML = '<span class="text-slate-400">كتابة حرة</span>';
         }
         if (textInput && textInput.value) {
           const pred = (typeof checkPredatoryStatus === 'function') ? checkPredatoryStatus(textInput.value.trim()) : null;
@@ -1938,7 +1972,7 @@
       const link = document.getElementById("input-link").value.trim();
 
       // فحص تغطية سكوباس تلقائياً (للمجلات العالمية فقط)
-      let scopusData = { status: journalCategory, years: '', isCovered: false, notApplicable: true };
+      let scopusData = { status: journalCategory, years: 'غير مشمولة بالفحص', isCovered: false, notApplicable: true };
       if (journalCategory === "مجلة عالمية") {
         try {
           scopusData = await fetchScopusCoverage(journal, journalCategory);
@@ -2100,7 +2134,7 @@
                   ${escapeHtml(item.journalCategory)}
                 </span>
                 <span class="text-[10px] text-slate-400 font-semibold mt-1">
-                  
+                  غير مشمولة بالفحص
                 </span>
               </div>
             ` : `
@@ -2316,7 +2350,7 @@
                 ${escapeHtml(item.journalCategory)}
               </div>
               <div style="font-size:8.5px;color:#94a3b8;font-weight:600;">
-                
+                غير مشمولة بالفحص
               </div>
             ` : `
               <div style="font-weight:800;font-size:10px;color:${item.isScopusCovered ? '#15803d' : '#b91c1c'};margin-bottom:2px;">
@@ -2429,10 +2463,10 @@
         const it = targetItems[i];
         if (it.journalCategory !== "مجلة عالمية") {
           it.scopusStatus = it.journalCategory || "غير مشمولة";
-          it.scopusYears = "";
+          it.scopusYears = "غير مشمولة بالفحص";
           it.isScopusCovered = false;
           it.notApplicable = true;
-        } else if (!it.scopusStatus || !it.scopusYears || it.scopusYears === "") {
+        } else if (!it.scopusStatus || !it.scopusYears || it.scopusYears === "غير مشمولة بالفحص") {
           try {
             const sc = await fetchScopusCoverage(it.journal, it.journalCategory);
             it.scopusStatus = sc.status;
@@ -3339,10 +3373,10 @@
         const it = items[i];
         if (it.journalCategory !== "مجلة عالمية") {
           it.scopusStatus = it.journalCategory || "غير مشمولة";
-          it.scopusYears = "";
+          it.scopusYears = "غير مشمولة بالفحص";
           it.isScopusCovered = false;
           it.notApplicable = true;
-        } else if (!it.scopusStatus || !it.scopusYears || it.scopusYears === "") {
+        } else if (!it.scopusStatus || !it.scopusYears || it.scopusYears === "غير مشمولة بالفحص") {
           try {
             const sc = await fetchScopusCoverage(it.journal, it.journalCategory);
             it.scopusStatus = sc.status;
@@ -3548,7 +3582,7 @@
                     ${escapeHtml(item.journalCategory)}
                   </span>
                   <span class="text-[10px] text-slate-400 font-semibold mt-1">
-                    
+                    غير مشمولة بالفحص
                   </span>
                 </div>
               ` : `
@@ -3701,7 +3735,7 @@
                   ${escapeHtml(item.journalCategory)}
                 </div>
                 <div style="font-size:8.5px;color:#94a3b8;font-weight:600;">
-                  
+                  غير مشمولة بالفحص
                 </div>
               ` : `
                 <div style="font-weight:800;font-size:10px;color:${item.isScopusCovered ? '#15803d' : '#b91c1c'};margin-bottom:2px;">
