@@ -1770,7 +1770,7 @@
           selectElem.removeAttribute("required");
         }
         if (modeIndicator) {
-          modeIndicator.innerHTML = '<span class="text-slate-400">كتابة حرة</span>';
+          modeIndicator.innerHTML = '<span class="text-slate-400"></span>';
         }
         if (textInput && textInput.value) {
           const pred = (typeof checkPredatoryStatus === 'function') ? checkPredatoryStatus(textInput.value.trim()) : null;
